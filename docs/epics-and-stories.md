@@ -86,7 +86,7 @@ Stories are ordered by dependency: earlier stories must be complete before later
 - [x] `AppState.alert_paused` is set to `True` immediately on disconnect
 - [x] A background retry loop attempts reconnection every 5 seconds (configurable)
 - [x] On reconnection, `alert_paused` is cleared and normal monitoring resumes
-- [ ] An audio notification fires every 5 minutes while camera is offline (reuses `AlertManager`)
+- [x] An audio notification fires every 5 minutes while camera is offline (reuses `AlertManager`)
 - [x] Unit test: simulate a camera dropping (mock `read_frames()` returning None) and verify state transitions
 - [x] `docs/decisions/ADR-003-degraded-mode-behavior.md` documents why alerting is paused (not guessed) when one camera is offline
 
@@ -205,13 +205,13 @@ Stories are ordered by dependency: earlier stories must be complete before later
 **So that** the app can warn the user or pause alerting if cameras are no longer in their calibrated positions
 
 **AC:**
-- [ ] `camera/drift_detector.py` implements `DriftDetector(reference_paths, calibration_dict)`
-- [ ] `check(camera_manager)` returns `(drift_cm: float, severity: str)` where severity ∈ `{'none', 'minor', 'significant'}`
-- [ ] Uses `cv2.phaseCorrelate` on grayscale frames to get `(dx, dy)` per camera
-- [ ] `drift_cm = |slope| * hypot(dx, dy)`; takes max across both cameras
-- [ ] Thresholds: `< 5 cm` = `'none'`; `5–20 cm` = `'minor'`; `> 20 cm` = `'significant'`
-- [ ] Unit tests: shift reference image 0px → `'none'`; shift 30px (simulate minor) → `'minor'` or `'significant'` depending on slope; reference image path missing → raises `DriftDetectorError`
-- [ ] `docs/decisions/ADR-007-drift-detection-thresholds.md` documents the 5 cm / 20 cm thresholds, the phaseCorrelate choice, and why a physical marker was not required
+- [x] `camera/drift_detector.py` implements `DriftDetector(reference_paths, calibration_dict)`
+- [x] `check(camera_manager)` returns `(drift_cm: float, severity: str)` where severity ∈ `{'none', 'minor', 'significant'}`
+- [x] Uses `cv2.phaseCorrelate` on grayscale frames to get `(dx, dy)` per camera
+- [x] `drift_cm = |slope| * hypot(dx, dy)`; takes max across both cameras
+- [x] Thresholds: `< 5 cm` = `'none'`; `5–20 cm` = `'minor'`; `> 20 cm` = `'significant'`
+- [x] Unit tests: shift reference image 0px → `'none'`; shift 30px (simulate minor) → `'minor'` or `'significant'` depending on slope; reference image path missing → raises `DriftDetectorError`
+- [x] `docs/decisions/ADR-007-drift-detection-thresholds.md` documents the 5 cm / 20 cm thresholds, the phaseCorrelate choice, and why a physical marker was not required
 
 ---
 
@@ -228,13 +228,13 @@ Stories are ordered by dependency: earlier stories must be complete before later
 **So that** I am notified even when not watching the screen
 
 **AC:**
-- [ ] `audio/alert_manager.py` implements `AlertManager.run(app_state_lock, app_state)` as a blocking loop suitable for a daemon thread
-- [ ] Announces `alert_message` while `person_too_close` is True; waits 3 seconds between announcements (`alert_cooldown_seconds`)
-- [ ] Sleeps (no CPU) when `person_too_close` is False
-- [ ] When `alert_paused` is True: speaks "Camera offline — check the connection" (or "Recalibration required") every 5 minutes; does not speak distance alerts
-- [ ] When `position_drift_warning` is True: speaks the drift warning exactly once, then clears the flag
-- [ ] Unit tests (mocking pyttsx3): verify `say()` called on transition to `person_too_close = True`; not called when `alert_paused = True`; drift warning spoken exactly once
-- [ ] `docs/decisions/ADR-008-tts-library.md` documents choice of pyttsx3 over cloud TTS
+- [x] `audio/alert_manager.py` implements `AlertManager.run(app_state_lock, app_state)` as a blocking loop suitable for a daemon thread
+- [x] Announces `alert_message` while `person_too_close` is True; waits 3 seconds between announcements (`alert_cooldown_seconds`)
+- [x] Sleeps (no CPU) when `person_too_close` is False
+- [x] When `alert_paused` is True: speaks "Camera offline — check the connection" (or "Recalibration required") every 5 minutes; does not speak distance alerts
+- [x] When `position_drift_warning` is True: speaks the drift warning exactly once, then clears the flag
+- [x] Unit tests (mocking pyttsx3): verify `say()` called on transition to `person_too_close = True`; not called when `alert_paused = True`; drift warning spoken exactly once
+- [x] `docs/decisions/ADR-008-tts-library.md` documents choice of pyttsx3 over cloud TTS
 
 ---
 
@@ -251,9 +251,9 @@ Stories are ordered by dependency: earlier stories must be complete before later
 **So that** the camera thread and alert thread can communicate safely without race conditions
 
 **AC:**
-- [ ] `main.py` (or `state.py`) defines `AppState` with all fields from the plan
-- [ ] All reads and writes use `with app_state_lock:`
-- [ ] Unit test: two threads writing and reading simultaneously do not produce inconsistent state (simple concurrency smoke test)
+- [x] `main.py` (or `state.py`) defines `AppState` with all fields from the plan
+- [x] All reads and writes use `with app_state_lock:`
+- [x] Unit test: two threads writing and reading simultaneously do not produce inconsistent state (simple concurrency smoke test)
 
 ---
 
@@ -264,10 +264,10 @@ Stories are ordered by dependency: earlier stories must be complete before later
 **So that** I can see at a glance whether monitoring is active, degraded, or needs attention
 
 **AC:**
-- [ ] `tray/tray_app.py` implements `TrayApp` using pystray
-- [ ] Tray icon has 4 visual states: OK (green), Too Close (red), Degraded/Offline (orange), Uncalibrated (grey)
-- [ ] Right-click menu shows: Status (read-only), Settings, Quit
-- [ ] Icon state updates on every `AppState` change (polling or event-driven)
+- [x] `tray/tray_app.py` implements `TrayApp` using pystray
+- [x] Tray icon has 4 visual states: OK (green), Too Close (red), Degraded/Offline (orange), Uncalibrated (grey)
+- [x] Right-click menu shows: Status (read-only), Settings, Quit
+- [x] Icon state updates on every `AppState` change (polling or event-driven)
 - [ ] Manual test on macOS: tray icon appears and menu is clickable
 - [ ] Manual test on Windows: same; icon visible in system tray area
 
@@ -280,15 +280,15 @@ Stories are ordered by dependency: earlier stories must be complete before later
 **So that** I can configure the app for my specific TV and room layout
 
 **AC:**
-- [ ] `tray/settings_window.py` implements `SettingsWindow` using Tkinter
-- [ ] Shows live dual-camera preview (side-by-side, 640×480 each)
-- [ ] Shows calibration status banner (red "NOT CALIBRATED" or green "Calibrated")
-- [ ] "Calibrate" / "Recalibrate" button triggers `StereoCalibrator.calibrate_diamond()` with a progress indicator
-- [ ] Distance slider: 0.5–3.0 m, default 1.5 m, updates `AppState.min_safe_distance_m` on change
-- [ ] Frame Capture Interval slider: 50–500 ms, updates `AppState.frame_capture_interval_ms` live
-- [ ] Drift threshold spinners: minor (default 5 cm), significant (default 20 cm)
-- [ ] "Test Alert" button plays TTS once without affecting alert state
-- [ ] "Save" persists all settings to disk
+- [x] `tray/settings_window.py` implements `SettingsWindow` using Tkinter
+- [x] Shows live dual-camera preview (side-by-side, 640×480 each)
+- [x] Shows calibration status banner (red "NOT CALIBRATED" or green "Calibrated")
+- [x] "Calibrate" / "Recalibrate" button triggers `StereoCalibrator.calibrate_diamond()` with a progress indicator
+- [x] Distance slider: 0.5–3.0 m, default 1.5 m, updates `AppState.min_safe_distance_m` on change
+- [x] Frame Capture Interval slider: 50–500 ms, updates `AppState.frame_capture_interval_ms` live
+- [x] Drift threshold spinners: minor (default 5 cm), significant (default 20 cm)
+- [x] "Test Alert" button plays TTS once without affecting alert state
+- [x] "Save" persists all settings to disk
 - [ ] Manual test: window opens, sliders respond, preview shows live frames
 
 ---
@@ -300,10 +300,10 @@ Stories are ordered by dependency: earlier stories must be complete before later
 **So that** monitoring is always active when the TV is in use
 
 **AC:**
-- [ ] `main.py` follows the startup sequence from the plan: load settings → check calibration → open cameras (with backoff) → drift check → start threads → run tray
-- [ ] On first run (no calibration): tray shows grey, notification fires, cameras open for preview only
-- [ ] On subsequent runs (calibrated): drift check runs; result sets `alert_paused` or `position_drift_warning` accordingly
-- [ ] App reaches monitoring state within 15 seconds of launch on a normal Windows boot
+- [x] `main.py` follows the startup sequence from the plan: load settings → check calibration → open cameras (with backoff) → drift check → start threads → run tray
+- [x] On first run (no calibration): tray shows grey, notification fires, cameras open for preview only
+- [x] On subsequent runs (calibrated): drift check runs; result sets `alert_paused` or `position_drift_warning` accordingly
+- [x] App reaches monitoring state within 15 seconds of launch on a normal Windows boot
 - [ ] Manual test: run `python main.py` on macOS; tray icon appears; settings window opens
 
 ---
@@ -321,10 +321,10 @@ Stories are ordered by dependency: earlier stories must be complete before later
 **So that** installation on Windows requires no Python knowledge
 
 **AC:**
-- [ ] `pyinstaller --onefile main.py` produces a working `.exe`
-- [ ] All assets (icons, any data files) are included in the bundle
-- [ ] `.exe` runs on a clean Windows machine (no Python installed)
-- [ ] `docs/decisions/ADR-009-packaging.md` documents PyInstaller choice vs. cx_Freeze
+- [x] `pyinstaller --onefile main.py` produces a working `.exe`
+- [x] All assets (icons, any data files) are included in the bundle
+- [ ] `.exe` runs on a clean Windows machine (no Python installed) *(verified on Windows CI on tag push)*
+- [x] `docs/decisions/ADR-009-packaging.md` documents PyInstaller choice vs. cx_Freeze
 
 ---
 
@@ -335,8 +335,8 @@ Stories are ordered by dependency: earlier stories must be complete before later
 **So that** I don't have to remember to launch it manually
 
 **AC:**
-- [ ] App registers itself in `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` on first launch (or via installer)
-- [ ] Can be disabled from the tray menu ("Disable Autostart")
+- [x] App registers itself in `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` on first launch (or via installer)
+- [x] Can be disabled from the tray menu ("Disable Autostart")
 - [ ] Manual test: reboot Windows → app appears in tray without manual launch
 
 ---
@@ -354,9 +354,9 @@ Stories are ordered by dependency: earlier stories must be complete before later
 **So that** I understand why the code is the way it is without digging through git history
 
 **AC:**
-- [ ] All ADRs listed in stories 1.1–9.1 are written and merged (`docs/decisions/ADR-00N-*.md`)
-- [ ] Each ADR contains: Context, Options Considered, Decision, Consequences
-- [ ] `docs/decisions/README.md` lists all ADRs with a one-line summary
+- [x] All ADRs listed in stories 1.1–9.1 are written and merged (`docs/decisions/ADR-00N-*.md`)
+- [x] Each ADR contains: Context, Options Considered, Decision, Consequences
+- [x] `docs/decisions/README.md` lists all ADRs with a one-line summary
 
 ---
 
@@ -367,8 +367,8 @@ Stories are ordered by dependency: earlier stories must be complete before later
 **So that** I can verify the app works end-to-end before every release
 
 **AC:**
-- [ ] `docs/manual-test-checklist.md` exists with a checkbox list covering all manual scenarios from the testing strategy
-- [ ] Checklist is version-stamped (each release gets a dated run of the checklist)
+- [x] `docs/manual-test-checklist.md` exists with a checkbox list covering all manual scenarios from the testing strategy
+- [x] Checklist is version-stamped (each release gets a dated run of the checklist)
 
 ---
 
@@ -379,5 +379,5 @@ Stories are ordered by dependency: earlier stories must be complete before later
 **So that** users know what changed and I have a repeatable shipping procedure
 
 **AC:**
-- [ ] `CHANGELOG.md` exists following Keep a Changelog format
-- [ ] `docs/release-process.md` documents: version bump, CHANGELOG update, PyInstaller build, Windows test, tag and distribute
+- [x] `CHANGELOG.md` exists following Keep a Changelog format
+- [x] `docs/release-process.md` documents: version bump, CHANGELOG update, PyInstaller build, Windows test, tag and distribute

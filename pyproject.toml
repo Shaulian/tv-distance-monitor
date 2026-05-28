@@ -1,0 +1,17 @@
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+exclude = "venv"
+
+[tool.ruff]
+line-length = 100
+exclude = ["venv"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.coverage.run]
+omit = ["tray/*", "main.py", "tvdm.spec", "venv/*"]
