@@ -1,16 +1,24 @@
 {
-  "hooks": [
-    {
-      "event": "PostToolUse",
-      "matcher": "Write|Edit",
-      "command": "cd \"$ROOT\" && python -m black --quiet \"$FILE\" 2>/dev/null || true",
-      "description": "Auto-format Python with Black after edits"
-    },
-    {
-      "event": "PostToolUse",
-      "matcher": "Write|Edit",
-      "command": "cd \"$ROOT\" && python -m ruff check --fix --quiet \"$FILE\" 2>/dev/null || true",
-      "description": "Quick lint check with ruff after edits"
-    }
-  ]
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$ROOT\" && python -m black --quiet \"$FILE\" 2>/dev/null || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$ROOT\" && python -m ruff check --fix --quiet \"$FILE\" 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
 }
