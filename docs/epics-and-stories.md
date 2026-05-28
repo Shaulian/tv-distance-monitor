@@ -99,11 +99,11 @@ Stories are ordered by dependency: earlier stories must be complete before later
 **So that** stereo matching works correctly even when cameras have different native resolutions
 
 **AC:**
-- [ ] `camera/frame_processor.py` implements `FrameProcessor.process(left, right)`
-- [ ] Both frames are resized to `min(height_left, height_right)` × `min(width_left, width_right)` using `cv2.INTER_AREA`
-- [ ] If both frames are the same resolution, no resize occurs (performance: avoid unnecessary copy)
-- [ ] Unit tests: same-res pair passes through unchanged; different-res pair is downsampled to smaller; output shapes match
-- [ ] No display/preview logic in this module (single responsibility)
+- [x] `camera/frame_processor.py` implements `FrameProcessor.process(left, right)`
+- [x] Both frames are resized to `min(height_left, height_right)` × `min(width_left, width_right)` using `cv2.INTER_AREA`
+- [x] If both frames are the same resolution, no resize occurs (performance: avoid unnecessary copy)
+- [x] Unit tests: same-res pair passes through unchanged; different-res pair is downsampled to smaller; output shapes match
+- [x] No display/preview logic in this module (single responsibility)
 
 ---
 
@@ -144,13 +144,13 @@ Stories are ordered by dependency: earlier stories must be complete before later
 **So that** the app can determine whether someone is too close to the TV
 
 **AC:**
-- [ ] `detection/depth_estimator.py` implements `DepthEstimator(calibration_dict)` and `estimate_distance(detections_left, detections_right)`
-- [ ] Person matching heuristic: same person if bounding box vertical centres are within 20px
-- [ ] Disparity = `cx_left - cx_right` (horizontal centroid difference)
-- [ ] Distance = `intercept + slope * disparity` using calibration curve
-- [ ] Returns `None` if no matching pair found
-- [ ] Unit tests: known disparity → verify distance within 5%; no right detections → returns `None`; multiple persons → returns closest (smallest distance)
-- [ ] `docs/decisions/ADR-005-depth-estimation-method.md` documents the disparity approach and why structured-light / ToF sensors were out of scope
+- [x] `detection/depth_estimator.py` implements `DepthEstimator(calibration_dict)` and `estimate_distance(detections_left, detections_right)`
+- [x] Person matching heuristic: same person if bounding box vertical centres are within 20px
+- [x] Disparity = `cx_left - cx_right` (horizontal centroid difference)
+- [x] Distance = `intercept + slope * disparity` using calibration curve
+- [x] Returns `None` if no matching pair found
+- [x] Unit tests: known disparity → verify distance within 5%; no right detections → returns `None`; multiple persons → returns closest (smallest distance)
+- [x] `docs/decisions/ADR-005-depth-estimation-method.md` documents the disparity approach and why structured-light / ToF sensors were out of scope
 
 ---
 
