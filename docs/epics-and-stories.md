@@ -120,14 +120,14 @@ Stories are ordered by dependency: earlier stories must be complete before later
 **So that** the depth estimator has per-person positions to work with
 
 **AC:**
-- [ ] `detection/person_detector.py` implements `PersonDetector.detect(frame)` returning list of `(x, y, w, h, cx, cy)`
-- [ ] Uses OpenCV's built-in HOG + default people detector (no external model file required)
-- [ ] Processes every 3rd frame; returns last result for skipped frames (reduces CPU ~66%)
-- [ ] Returns empty list (not None) when no person detected
-- [ ] Unit test with a fixture frame containing a person: detector returns ≥ 1 result
-- [ ] Unit test with a blank/empty fixture frame: detector returns `[]`
+- [x] `detection/person_detector.py` implements `PersonDetector.detect(frame)` returning list of `(x, y, w, h, cx, cy)`
+- [x] Uses OpenCV's built-in HOG + default people detector (no external model file required)
+- [x] Processes every 3rd frame; returns last result for skipped frames (reduces CPU ~66%)
+- [x] Returns empty list (not None) when no person detected
+- [x] Unit test with a fixture frame containing a person: detector returns ≥ 1 result
+- [x] Unit test with a blank/empty fixture frame: detector returns `[]`
 - [ ] `/test` skill passes
-- [ ] `docs/decisions/ADR-004-person-detection-approach.md` documents choice of HOG vs. ML models (MediaPipe, YOLO) and why HOG was chosen (offline, no model file, good enough for close-range)
+- [x] `docs/decisions/ADR-004-person-detection-approach.md` documents choice of HOG vs. ML models (MediaPipe, YOLO) and why HOG was chosen (offline, no model file, good enough for close-range)
 
 ---
 
@@ -167,14 +167,14 @@ Stories are ordered by dependency: earlier stories must be complete before later
 **So that** the app can accurately measure how far I (or a child) am from the screen
 
 **AC:**
-- [ ] `camera/stereo_calibration.py` implements `StereoCalibrator.calibrate_diamond(camera_manager, ui_callback)`
-- [ ] Captures 5 frames at each of the 4 diamond points and averages centroids
-- [ ] Fits a linear least-squares curve: `distance_m = intercept + slope * disparity`
-- [ ] `ui_callback` is called after each point with `(point_index, total_points)` so the UI can show progress
-- [ ] Calibration result stored in settings with `calibration.valid = True`
-- [ ] Unit test: 4 synthetic (disparity, distance) pairs → verify slope and intercept within 1% of expected values
-- [ ] Unit test: fewer than 2 valid detections raises `CalibrationError`
-- [ ] `docs/decisions/ADR-006-calibration-method.md` documents the diamond method, why 4 points, and the linear fit assumption
+- [x] `camera/stereo_calibration.py` implements `StereoCalibrator.calibrate_diamond(camera_manager, ui_callback)`
+- [x] Captures 5 frames at each of the 4 diamond points and averages centroids
+- [x] Fits a linear least-squares curve: `distance_m = intercept + slope * disparity`
+- [x] `ui_callback` is called after each point with `(point_index, total_points)` so the UI can show progress
+- [x] Calibration result stored in settings with `calibration.valid = True`
+- [x] Unit test: 4 synthetic (disparity, distance) pairs → verify slope and intercept within 1% of expected values
+- [x] Unit test: fewer than 2 valid detections raises `CalibrationError`
+- [x] `docs/decisions/ADR-006-calibration-method.md` documents the diamond method, why 4 points, and the linear fit assumption
 
 ---
 
@@ -185,10 +185,10 @@ Stories are ordered by dependency: earlier stories must be complete before later
 **So that** startup drift detection has a baseline to compare against
 
 **AC:**
-- [ ] After diamond calibration, `StereoCalibrator.save_reference_scene(camera_manager, dest_dir)` saves `reference_cam0.png` and `reference_cam1.png`
-- [ ] Settings stores paths as `calibration.reference_cam0_path` and `reference_cam1_path`
-- [ ] If files already exist, they are overwritten (recalibration refreshes the reference)
-- [ ] Unit test: method saves two PNG files to `tmp_path`; paths are stored in returned calibration dict
+- [x] After diamond calibration, `StereoCalibrator.save_reference_scene(camera_manager, dest_dir)` saves `reference_cam0.png` and `reference_cam1.png`
+- [x] Settings stores paths as `calibration.reference_cam0_path` and `reference_cam1_path`
+- [x] If files already exist, they are overwritten (recalibration refreshes the reference)
+- [x] Unit test: method saves two PNG files to `tmp_path`; paths are stored in returned calibration dict
 
 ---
 
