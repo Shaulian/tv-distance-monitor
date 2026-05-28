@@ -65,13 +65,13 @@ Stories are ordered by dependency: earlier stories must be complete before later
 **So that** all other camera-dependent modules have a single, reliable source of frames
 
 **AC:**
-- [ ] `camera/camera_manager.py` implements `CameraManager` with `open_cameras()`, `read_frames()`, `release()`
-- [ ] `open_cameras()` retries with exponential backoff (500ms, 1s, 2s…) for up to 10 seconds
-- [ ] Returns `(True, 2)`, `(True, 1)`, or `(False, 0)` correctly for both-open, one-open, none-open cases
-- [ ] `read_frames()` returns `(None, frame)` or `(frame, None)` when one camera drops mid-run
+- [x] `camera/camera_manager.py` implements `CameraManager` with `open_cameras()`, `read_frames()`, `release()`
+- [x] `open_cameras()` retries with exponential backoff (500ms, 1s, 2s…) for up to 10 seconds
+- [x] Returns `(True, 2)`, `(True, 1)`, or `(False, 0)` correctly for both-open, one-open, none-open cases
+- [x] `read_frames()` returns `(None, frame)` or `(frame, None)` when one camera drops mid-run
 - [ ] `/check-cameras` skill passes
-- [ ] Unit tests mock `cv2.VideoCapture` and verify backoff timing and return values
-- [ ] `AppState.num_cameras_online` is updated correctly after `open_cameras()`
+- [x] Unit tests mock `cv2.VideoCapture` and verify backoff timing and return values
+- [x] `AppState.num_cameras_online` is updated correctly after `open_cameras()`
 
 ---
 
