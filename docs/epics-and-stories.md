@@ -82,13 +82,13 @@ Stories are ordered by dependency: earlier stories must be complete before later
 **So that** the app self-heals without requiring manual restart
 
 **AC:**
-- [ ] When a live camera drops mid-run, `AppState.num_cameras_online` decrements within one frame cycle
-- [ ] `AppState.alert_paused` is set to `True` immediately on disconnect
-- [ ] A background retry loop attempts reconnection every 5 seconds (configurable)
-- [ ] On reconnection, `alert_paused` is cleared and normal monitoring resumes
+- [x] When a live camera drops mid-run, `AppState.num_cameras_online` decrements within one frame cycle
+- [x] `AppState.alert_paused` is set to `True` immediately on disconnect
+- [x] A background retry loop attempts reconnection every 5 seconds (configurable)
+- [x] On reconnection, `alert_paused` is cleared and normal monitoring resumes
 - [ ] An audio notification fires every 5 minutes while camera is offline (reuses `AlertManager`)
-- [ ] Unit test: simulate a camera dropping (mock `read_frames()` returning None) and verify state transitions
-- [ ] `docs/decisions/ADR-003-degraded-mode-behavior.md` documents why alerting is paused (not guessed) when one camera is offline
+- [x] Unit test: simulate a camera dropping (mock `read_frames()` returning None) and verify state transitions
+- [x] `docs/decisions/ADR-003-degraded-mode-behavior.md` documents why alerting is paused (not guessed) when one camera is offline
 
 ---
 
