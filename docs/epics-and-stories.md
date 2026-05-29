@@ -407,6 +407,51 @@ Stories are ordered by dependency: earlier stories must be complete before later
 
 ---
 
+### Story 11.2 — Single-Camera Dev Mode
+
+**As a** developer on macOS with only a built-in webcam  
+**I want** to start the app with a single camera  
+**So that** I can test the tray icon, settings UI, and TTS without stereo hardware
+
+**AC:**
+- [x] `python main.py --one-camera` starts the app using only camera index 0
+- [x] `CameraManager` accepts `one_camera_mode: bool` — when `True`, it only opens and reads index 0; index 1 is always `None`
+- [x] In one-camera mode `num_cameras_online` reflects the single camera (1 when connected, 0 when not)
+- [x] Tray shows "Status: Uncalibrated" (stereo depth unavailable); alert processing is skipped; TTS and icon state still function
+- [x] Unit tests cover: one-camera open succeeds, one-camera open fails, read_frames returns `(frame, None)` in one-camera mode
+- [x] ADR-011 documents the decision to use a CLI flag rather than auto-detect
+
+---
+
+### Story 11.3 — pystray macOS Icon Fix
+
+**As a** developer running the tray app on macOS  
+**I want** the tray icon to render correctly  
+**So that** I can visually verify icon state changes during development
+
+**AC:**
+- [x] `_make_icon()` produces `RGBA` images (not `RGB`) to satisfy the macOS AppKit pystray backend
+- [x] All four icon colours (green, red, orange, grey) remain visually correct
+- [x] Existing Windows behaviour is unchanged (pystray accepts RGBA on Windows too)
+- [x] Unit test asserts `image.mode == "RGBA"` and correct pixel colour for each state
+
+---
+
+### Story 11.4 — macOS Camera Permission Grace Period
+
+**As a** developer launching the app on macOS for the first time  
+**I want** the app to wait briefly for the system camera permission dialog  
+**So that** it doesn't immediately fall into degraded mode before I've had a chance to grant access
+
+**AC:**
+- [x] `AppState` gains `awaiting_camera_permission: bool = False`
+- [x] After `open_cameras()`, if a camera opened but its first `read()` returns no frame, the app sets `awaiting_camera_permission = True` and retries for up to 5 seconds (0.5 s intervals)
+- [x] Tray `get_status()` returns `"Status: Awaiting permission"` when `awaiting_camera_permission` is `True`
+- [x] After the grace period, `awaiting_camera_permission` is cleared and normal degraded-mode logic takes over
+- [x] Unit tests mock `cv2.VideoCapture.read` to simulate: instant frames, delayed frames (clears flag after N retries), permission never granted (falls through to degraded)
+
+---
+
 ### Story 11.5 — Settings Window UI Refinements
 
 **As a** developer testing on macOS  
@@ -455,48 +500,3 @@ Stories are ordered by dependency: earlier stories must be complete before later
 - [x] In `--one-camera` mode only the left-camera preview is shown; the right canvas displays a placeholder
 - [x] `docs/decisions/ADR-013-camera-preview-handoff.md` documents the handoff pattern
 - [x] Unit tests verify `on_before_settings` is called before the subprocess is launched
-
----
-
-### Story 11.2 — Single-Camera Dev Mode
-
-**As a** developer on macOS with only a built-in webcam  
-**I want** to start the app with a single camera  
-**So that** I can test the tray icon, settings UI, and TTS without stereo hardware
-
-**AC:**
-- [x] `python main.py --one-camera` starts the app using only camera index 0
-- [x] `CameraManager` accepts `one_camera_mode: bool` — when `True`, it only opens and reads index 0; index 1 is always `None`
-- [x] In one-camera mode `num_cameras_online` reflects the single camera (1 when connected, 0 when not)
-- [x] Tray shows "Status: Uncalibrated" (stereo depth unavailable); alert processing is skipped; TTS and icon state still function
-- [x] Unit tests cover: one-camera open succeeds, one-camera open fails, read_frames returns `(frame, None)` in one-camera mode
-- [x] ADR-011 documents the decision to use a CLI flag rather than auto-detect
-
----
-
-### Story 11.3 — pystray macOS Icon Fix
-
-**As a** developer running the tray app on macOS  
-**I want** the tray icon to render correctly  
-**So that** I can visually verify icon state changes during development
-
-**AC:**
-- [x] `_make_icon()` produces `RGBA` images (not `RGB`) to satisfy the macOS AppKit pystray backend
-- [x] All four icon colours (green, red, orange, grey) remain visually correct
-- [x] Existing Windows behaviour is unchanged (pystray accepts RGBA on Windows too)
-- [x] Unit test asserts `image.mode == "RGBA"` and correct pixel colour for each state
-
----
-
-### Story 11.4 — macOS Camera Permission Grace Period
-
-**As a** developer launching the app on macOS for the first time  
-**I want** the app to wait briefly for the system camera permission dialog  
-**So that** it doesn't immediately fall into degraded mode before I've had a chance to grant access
-
-**AC:**
-- [x] `AppState` gains `awaiting_camera_permission: bool = False`
-- [x] After `open_cameras()`, if a camera opened but its first `read()` returns no frame, the app sets `awaiting_camera_permission = True` and retries for up to 5 seconds (0.5 s intervals)
-- [x] Tray `get_status()` returns `"Status: Awaiting permission"` when `awaiting_camera_permission` is `True`
-- [x] After the grace period, `awaiting_camera_permission` is cleared and normal degraded-mode logic takes over
-- [x] Unit tests mock `cv2.VideoCapture.read` to simulate: instant frames, delayed frames (clears flag after N retries), permission never granted (falls through to degraded)
