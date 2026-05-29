@@ -20,7 +20,11 @@ class StereoCalibrator:
         distances_m=DIAMOND_DISTANCES_M,
         frames_per_point: int = 5,
     ) -> dict:
-        detector = PersonDetector()
+        # Per ADR-015: one PersonDetector per camera. PersonDetector's
+        # frame-skip cache is per-instance; sharing one across both cameras
+        # collapses stereo disparity to 0 and corrupts the calibration curve.
+        detector_left = PersonDetector()
+        detector_right = PersonDetector()
         points: list[tuple[float, float]] = []  # (disparity, distance_m)
 
         for i, distance_m in enumerate(distances_m):
@@ -31,8 +35,8 @@ class StereoCalibrator:
                 left, right = camera_manager.read_frames()
                 if left is None or right is None:
                     continue
-                dets_l = detector.detect(left)
-                dets_r = detector.detect(right)
+                dets_l = detector_left.detect(left)
+                dets_r = detector_right.detect(right)
                 if not dets_l or not dets_r:
                     continue
                 cx_l = dets_l[0][4]

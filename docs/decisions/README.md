@@ -22,6 +22,7 @@ Use `docs/decisions/ADR-000-template.md` when writing a new ADR.
 | [ADR-012](ADR-012-macos-settings-subprocess.md) | macOS Settings Window via Subprocess (Tkinter + pystray main thread conflict) | Accepted |
 | [ADR-013](ADR-013-camera-preview-handoff.md) | Camera Preview in Settings via Process Handoff | Accepted |
 | [ADR-014](ADR-014-layered-coverage-gates.md) | Layered Coverage Gates (Core High-Bar 90% + Full-Codebase Floor 45%, no omit, branch coverage) | Accepted |
+| [ADR-015](ADR-015-per-camera-person-detector.md) | One PersonDetector Instance Per Camera (fixes shared frame-skip cache collapsing stereo disparity) | Accepted |
 
 ## How to Add a New ADR
 
