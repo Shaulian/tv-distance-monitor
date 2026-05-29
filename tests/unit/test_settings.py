@@ -4,7 +4,6 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
 
 from config.settings import DEFAULTS, _settings_path, load_settings, save_settings
 

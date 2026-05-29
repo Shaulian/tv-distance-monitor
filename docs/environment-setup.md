@@ -11,6 +11,30 @@
 
 ## macOS Development Setup
 
+### Quick Start (recommended)
+
+```bash
+git clone <repo-url>
+cd tv-distance-monitor
+./run_dev.sh
+```
+
+`run_dev.sh` handles everything: creates the venv, installs `requirements.txt`, verifies all key imports, and runs the unit test suite. If `tkinter` is missing it prints the exact `brew` command needed.
+
+To launch the app after setup:
+
+```bash
+source venv/bin/activate
+
+# Full stereo mode (requires two USB cameras connected)
+python main.py
+
+# Single-camera mode — works with just the built-in MacBook webcam
+python main.py --one-camera
+```
+
+### Manual Setup (if run_dev.sh is not suitable)
+
 ```bash
 # 1. Clone the repo
 git clone <repo-url>
@@ -24,7 +48,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # 4. Verify key packages loaded
-python -c "import cv2, numpy, pyttsx3, pystray; print('All imports OK')"
+python -c "import cv2, numpy, pyttsx3, pystray, tkinter, PIL; print('All imports OK')"
 
 # 5. Run linter and formatter check
 black --check .
@@ -35,6 +59,8 @@ pytest tests/unit/ -v
 ```
 
 **macOS note:** pyttsx3 uses `nsss` (macOS speech) on macOS. Voice behaviour will differ from Windows. Only test alert logic (timing, flags) on macOS — test actual audio on Windows.
+
+**First launch camera note:** On macOS, the system will show a camera permission dialog the first time the app opens a camera. The app waits up to 5 seconds for permission to be granted before falling into degraded mode. Grant access when prompted.
 
 ---
 
@@ -120,7 +146,10 @@ pip install -r requirements.txt
 | Problem | Fix |
 |---------|-----|
 | `import cv2` fails | `pip install opencv-python`; on Linux also `apt install libgl1` |
+| `import tkinter` fails on macOS | `brew install python-tk@3.11`, then recreate the venv |
 | `import pystray` fails on macOS | `pip install pystray`; may also need `pip install pillow` |
-| Camera index 0 opens but returns black frames | Try unplugging and replugging; try `CAP_DSHOW` on Windows |
+| Camera index 0 opens but returns black frames (macOS) | macOS camera permission not yet granted — launch once and accept the system dialog; the app has a 5-second grace period |
+| Camera index 0 opens but returns black frames (Windows) | Try unplugging and replugging; try `CAP_DSHOW` on Windows |
 | pyttsx3 `runAndWait()` hangs on macOS | Known issue; call from a non-main thread (already handled in AlertManager) |
 | PyInstaller `.exe` crashes silently on Windows | Run from terminal to see traceback: `TVDistanceMonitor.exe` in `cmd.exe` |
+| Tray icon appears but menu items are unresponsive on macOS | macOS requires the app to be granted Accessibility permissions in System Settings |

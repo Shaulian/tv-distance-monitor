@@ -3,9 +3,7 @@ import numpy as np
 
 
 class FrameProcessor:
-    def process(
-        self, left: np.ndarray, right: np.ndarray
-    ) -> tuple[np.ndarray, np.ndarray]:
+    def process(self, left: np.ndarray, right: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         h_l, w_l = left.shape[:2]
         h_r, w_r = right.shape[:2]
 

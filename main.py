@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import sys
 import threading
 import time
@@ -52,6 +53,14 @@ def _camera_loop(
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="TV Distance Monitor")
+    parser.add_argument(
+        "--one-camera",
+        action="store_true",
+        help="Run with a single camera (index 0). Useful for macOS development.",
+    )
+    args = parser.parse_args()
+
     settings = load_settings()
     calibration: dict = settings.get("calibration", {})
 
@@ -67,8 +76,9 @@ def main() -> None:
     lock = threading.Lock()
     stop = threading.Event()
 
-    camera_manager = CameraManager()
+    camera_manager = CameraManager(one_camera_mode=args.one_camera)
     camera_manager.open_cameras(state)
+    camera_manager.wait_for_camera_permission(state)
 
     if state.calibration_valid:
         try:

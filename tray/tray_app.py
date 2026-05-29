@@ -8,16 +8,17 @@ from PIL import Image
 _ICON_SIZE = 64
 _POLL_INTERVAL_S = 0.5
 
-_COLORS: dict[str, tuple[int, int, int]] = {
-    "green": (34, 197, 94),  # OK / monitoring active
-    "red": (239, 68, 68),  # Too close
-    "orange": (249, 115, 22),  # Degraded / camera offline
-    "grey": (156, 163, 175),  # Uncalibrated
+_COLORS: dict[str, tuple[int, int, int, int]] = {
+    "green": (34, 197, 94, 255),  # OK / monitoring active
+    "red": (239, 68, 68, 255),  # Too close
+    "orange": (249, 115, 22, 255),  # Degraded / camera offline
+    "grey": (156, 163, 175, 255),  # Uncalibrated
 }
 
 
 def _make_icon(color: str) -> Image.Image:
-    return Image.new("RGB", (_ICON_SIZE, _ICON_SIZE), _COLORS[color])
+    # RGBA required for macOS AppKit pystray backend; accepted on Windows too
+    return Image.new("RGBA", (_ICON_SIZE, _ICON_SIZE), _COLORS[color])
 
 
 class TrayApp:
@@ -35,6 +36,9 @@ class TrayApp:
                 cameras = self._state.num_cameras_online
                 too_close = self._state.person_too_close
                 paused = self._state.alert_paused
+                awaiting = self._state.awaiting_camera_permission
+            if awaiting:
+                return "Status: Awaiting permission"
             if not valid:
                 return "Status: Uncalibrated"
             if paused or cameras < 2:

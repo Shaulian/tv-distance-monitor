@@ -1,6 +1,5 @@
 import numpy as np
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from detection.person_detector import PersonDetector
 
@@ -99,7 +98,7 @@ def test_skipped_frame_before_first_detection_returns_empty():
     detector = PersonDetector.__new__(PersonDetector)
     detector._hog = MagicMock()
     detector._hog.detectMultiScale.return_value = (FAKE_BOX, None)
-    detector._frame_count = 1   # artificially skip first-frame processing
+    detector._frame_count = 1  # artificially skip first-frame processing
     detector._last_result = []
     result = detector.detect(BLANK)
     assert result == []

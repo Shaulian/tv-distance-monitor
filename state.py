@@ -15,3 +15,4 @@ class AppState:
     alert_message: str = "Please move back from the TV"
     drift_threshold_minor_cm: float = 5.0
     drift_threshold_significant_cm: float = 20.0
+    awaiting_camera_permission: bool = False

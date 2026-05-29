@@ -5,10 +5,14 @@ import cv2
 
 
 class CameraManager:
-    def __init__(self):
+    def __init__(self, one_camera_mode: bool = False):
+        self._one_camera_mode = one_camera_mode
         self._caps: list = [None, None]
 
     def open_cameras(self, app_state=None) -> tuple[bool, int]:
+        if self._one_camera_mode:
+            return self._open_one_camera(app_state)
+
         deadline = time.monotonic() + 10.0
         delay = 0.5
 
@@ -39,7 +43,59 @@ class CameraManager:
 
         return (count > 0, count)
 
+    def _open_one_camera(self, app_state=None) -> tuple[bool, int]:
+        cap = cv2.VideoCapture(0)
+        if cap.isOpened():
+            self._caps[0] = cap
+            count = 1
+        else:
+            cap.release()
+            count = 0
+        if app_state is not None:
+            app_state.num_cameras_online = count
+        return (count > 0, count)
+
+    def wait_for_camera_permission(
+        self, app_state, timeout: float = 5.0, interval: float = 0.5
+    ) -> None:
+        """Wait up to `timeout` seconds for a camera that opened but yields no frames yet.
+
+        On macOS the system permission dialog is shown on the first capture attempt;
+        cv2.VideoCapture.read() returns (False, None) until access is granted.
+        """
+        cap = self._caps[0]
+        if cap is None or not cap.isOpened():
+            return  # camera didn't open at all; nothing to wait for
+
+        ret, _ = cap.read()
+        if ret:
+            return  # frames already arriving; no permission delay
+
+        app_state.awaiting_camera_permission = True
+        deadline = time.monotonic() + timeout
+
+        while time.monotonic() < deadline:
+            time.sleep(interval)
+            ret, _ = cap.read()
+            if ret:
+                app_state.awaiting_camera_permission = False
+                return
+
+        # Timeout reached; permission was never granted
+        app_state.awaiting_camera_permission = False
+        app_state.num_cameras_online = 0
+
     def read_frames(self) -> tuple:
+        if self._one_camera_mode:
+            cap = self._caps[0]
+            if cap is not None and cap.isOpened():
+                ret, frame = cap.read()
+                if not ret:
+                    self._caps[0] = None
+                    return (None, None)
+                return (frame, None)
+            return (None, None)
+
         frames = []
         for i, cap in enumerate(self._caps):
             if cap is not None and cap.isOpened():

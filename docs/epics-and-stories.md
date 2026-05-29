@@ -381,3 +381,71 @@ Stories are ordered by dependency: earlier stories must be complete before later
 **AC:**
 - [x] `CHANGELOG.md` exists following Keep a Changelog format
 - [x] `docs/release-process.md` documents: version bump, CHANGELOG update, PyInstaller build, Windows test, tag and distribute
+
+---
+
+## Epic 11: macOS Development & Testing
+
+> Make the app runnable on macOS for development and algorithm testing, without requiring Windows or two USB cameras.
+
+---
+
+### Story 11.1 — Dev Setup Script
+
+**As a** developer on macOS  
+**I want** a single script that sets up my environment and verifies all imports  
+**So that** I can start developing or testing without manual trial-and-error
+
+**AC:**
+- [x] `run_dev.sh` creates a venv (if absent), installs `requirements.txt`, and verifies all key imports (`cv2`, `numpy`, `pyttsx3`, `pystray`, `tkinter`, `PIL`)
+- [x] Script detects a missing `tkinter` and prints a `brew install python-tk@3.11` hint rather than a bare ImportError
+- [x] Script prints a final "Setup complete — run: python main.py" on success
+- [x] Script is chmod +x and runs on macOS zsh without sudo
+- [x] `docs/environment-setup.md` is updated with macOS quick-start instructions referencing `run_dev.sh`
+
+**Notes:** No unit tests (shell script). Document any macOS-specific dependency quirks in `docs/environment-setup.md`.
+
+---
+
+### Story 11.2 — Single-Camera Dev Mode
+
+**As a** developer on macOS with only a built-in webcam  
+**I want** to start the app with a single camera  
+**So that** I can test the tray icon, settings UI, and TTS without stereo hardware
+
+**AC:**
+- [x] `python main.py --one-camera` starts the app using only camera index 0
+- [x] `CameraManager` accepts `one_camera_mode: bool` — when `True`, it only opens and reads index 0; index 1 is always `None`
+- [x] In one-camera mode `num_cameras_online` reflects the single camera (1 when connected, 0 when not)
+- [x] Tray shows "Status: Uncalibrated" (stereo depth unavailable); alert processing is skipped; TTS and icon state still function
+- [x] Unit tests cover: one-camera open succeeds, one-camera open fails, read_frames returns `(frame, None)` in one-camera mode
+- [x] ADR-011 documents the decision to use a CLI flag rather than auto-detect
+
+---
+
+### Story 11.3 — pystray macOS Icon Fix
+
+**As a** developer running the tray app on macOS  
+**I want** the tray icon to render correctly  
+**So that** I can visually verify icon state changes during development
+
+**AC:**
+- [x] `_make_icon()` produces `RGBA` images (not `RGB`) to satisfy the macOS AppKit pystray backend
+- [x] All four icon colours (green, red, orange, grey) remain visually correct
+- [x] Existing Windows behaviour is unchanged (pystray accepts RGBA on Windows too)
+- [x] Unit test asserts `image.mode == "RGBA"` and correct pixel colour for each state
+
+---
+
+### Story 11.4 — macOS Camera Permission Grace Period
+
+**As a** developer launching the app on macOS for the first time  
+**I want** the app to wait briefly for the system camera permission dialog  
+**So that** it doesn't immediately fall into degraded mode before I've had a chance to grant access
+
+**AC:**
+- [x] `AppState` gains `awaiting_camera_permission: bool = False`
+- [x] After `open_cameras()`, if a camera opened but its first `read()` returns no frame, the app sets `awaiting_camera_permission = True` and retries for up to 5 seconds (0.5 s intervals)
+- [x] Tray `get_status()` returns `"Status: Awaiting permission"` when `awaiting_camera_permission` is `True`
+- [x] After the grace period, `awaiting_camera_permission` is cleared and normal degraded-mode logic takes over
+- [x] Unit tests mock `cv2.VideoCapture.read` to simulate: instant frames, delayed frames (clears flag after N retries), permission never granted (falls through to degraded)

@@ -14,9 +14,7 @@ class PersonDetector:
             return self._last_result
 
         self._frame_count += 1
-        boxes, _ = self._hog.detectMultiScale(
-            frame, winStride=(8, 8), padding=(4, 4), scale=1.05
-        )
+        boxes, _ = self._hog.detectMultiScale(frame, winStride=(8, 8), padding=(4, 4), scale=1.05)
 
         result = []
         for x, y, w, h in boxes:

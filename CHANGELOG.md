@@ -8,7 +8,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-*(Add changes here as stories are completed. Move to a versioned section at release time.)*
+### Added — Epic 11: macOS Development & Testing
+
+- **Story 11.1** — `run_dev.sh`: one-command macOS setup script; creates venv, installs deps, verifies all imports (with `brew install python-tk@3.11` hint for missing tkinter), runs unit tests. Updated `docs/environment-setup.md` with quick-start instructions.
+- **Story 11.2** — `--one-camera` CLI flag: `CameraManager` accepts `one_camera_mode=True` to open only index 0, enabling development and UI testing on a Mac with a single built-in webcam. ADR-011 documents the decision.
+- **Story 11.3** — pystray macOS icon fix: `_make_icon()` now produces RGBA images (was RGB); required by the macOS AppKit pystray backend. Backwards-compatible — pystray on Windows also accepts RGBA.
+- **Story 11.4** — Camera permission grace period: on first launch on macOS, the system permission dialog blocks camera reads. App now waits up to 5 s (0.5 s intervals) before falling into degraded mode. Tray shows "Status: Awaiting permission" during the wait. `AppState.awaiting_camera_permission` tracks this state.
 
 ---
 

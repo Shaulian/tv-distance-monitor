@@ -18,6 +18,7 @@ Use `docs/decisions/ADR-000-template.md` when writing a new ADR.
 | [ADR-008](ADR-008-tts-library.md) | Text-to-Speech Library (pyttsx3 vs. cloud TTS) | Accepted |
 | [ADR-009](ADR-009-packaging.md) | Windows Packaging (PyInstaller vs. cx_Freeze) | Accepted |
 | [ADR-010](ADR-010-threading-model.md) | Threading Model (pystray main thread + daemon threads + Lock) | Accepted |
+| [ADR-011](ADR-011-one-camera-dev-mode.md) | Single-Camera Dev Mode (--one-camera CLI flag vs. auto-detect) | Accepted |
 
 ## How to Add a New ADR
 

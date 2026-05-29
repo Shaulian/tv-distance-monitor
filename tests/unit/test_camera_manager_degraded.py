@@ -1,8 +1,7 @@
 import threading
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import numpy as np
-import pytest
 
 from camera.camera_manager import CameraManager
 from state import AppState
@@ -73,9 +72,11 @@ def test_read_frames_invalidates_cap_slot_on_failed_read():
     cap_l.read.return_value = (False, None)
     cap_r = _opened_cap()
 
-    with patch("camera.camera_manager.cv2.VideoCapture", side_effect=[cap_l, cap_r]), \
-         patch("camera.camera_manager.time.monotonic", return_value=0.0), \
-         patch("camera.camera_manager.time.sleep"):
+    with (
+        patch("camera.camera_manager.cv2.VideoCapture", side_effect=[cap_l, cap_r]),
+        patch("camera.camera_manager.time.monotonic", return_value=0.0),
+        patch("camera.camera_manager.time.sleep"),
+    ):
         mgr = CameraManager()
         mgr.open_cameras()
         mgr.read_frames()
@@ -91,9 +92,11 @@ def test_reconnect_once_restores_num_cameras_online():
     app_state = AppState(num_cameras_online=1, alert_paused=True)
     lock = threading.Lock()
 
-    with patch("camera.camera_manager.cv2.VideoCapture", side_effect=[_opened_cap(), _opened_cap()]), \
-         patch("camera.camera_manager.time.monotonic", return_value=0.0), \
-         patch("camera.camera_manager.time.sleep"):
+    with (
+        patch("camera.camera_manager.cv2.VideoCapture", side_effect=[_opened_cap(), _opened_cap()]),
+        patch("camera.camera_manager.time.monotonic", return_value=0.0),
+        patch("camera.camera_manager.time.sleep"),
+    ):
         mgr = CameraManager()
         mgr._caps = [_opened_cap(), None]  # cam0 open, cam1 gone
         mgr._reconnect_once(app_state, lock)
@@ -105,9 +108,11 @@ def test_reconnect_once_clears_alert_paused_on_full_reconnect():
     app_state = AppState(num_cameras_online=1, alert_paused=True)
     lock = threading.Lock()
 
-    with patch("camera.camera_manager.cv2.VideoCapture", side_effect=[_opened_cap()]), \
-         patch("camera.camera_manager.time.monotonic", return_value=0.0), \
-         patch("camera.camera_manager.time.sleep"):
+    with (
+        patch("camera.camera_manager.cv2.VideoCapture", side_effect=[_opened_cap()]),
+        patch("camera.camera_manager.time.monotonic", return_value=0.0),
+        patch("camera.camera_manager.time.sleep"),
+    ):
         mgr = CameraManager()
         mgr._caps = [_opened_cap(), None]
         mgr._reconnect_once(app_state, lock)
@@ -120,9 +125,11 @@ def test_reconnect_once_keeps_alert_paused_when_only_partial_reconnect():
     lock = threading.Lock()
 
     # Only cam0 reconnects, cam1 still fails → count=1, alert stays paused
-    with patch("camera.camera_manager.cv2.VideoCapture", side_effect=[_opened_cap(), _closed_cap()]), \
-         patch("camera.camera_manager.time.monotonic", side_effect=[0.0, 10.1]), \
-         patch("camera.camera_manager.time.sleep"):
+    with (
+        patch("camera.camera_manager.cv2.VideoCapture", side_effect=[_opened_cap(), _closed_cap()]),
+        patch("camera.camera_manager.time.monotonic", side_effect=[0.0, 10.1]),
+        patch("camera.camera_manager.time.sleep"),
+    ):
         mgr = CameraManager()
         mgr._caps = [None, None]
         mgr._reconnect_once(app_state, lock)
@@ -151,8 +158,10 @@ def test_run_reconnect_loop_sleeps_for_configured_interval():
     stop = threading.Event()
     mgr = CameraManager()
 
-    with patch("camera.camera_manager.time.sleep") as mock_sleep, \
-         patch.object(mgr, "_reconnect_once", side_effect=lambda *a: stop.set()):
+    with (
+        patch("camera.camera_manager.time.sleep") as mock_sleep,
+        patch.object(mgr, "_reconnect_once", side_effect=lambda *a: stop.set()),
+    ):
         t = threading.Thread(target=mgr.run_reconnect_loop, args=(app_state, lock, 5, stop))
         t.start()
         t.join(timeout=2.0)
