@@ -81,36 +81,25 @@ def test_production_camera_loop_computes_correct_distance_from_stereo_pair():
     """A person seen at cx=200 (left) and cx=150 (right) yields disparity 50 →
     distance 2.5 m > 1.5 m safe → person_too_close must be False.
 
-    The shared-detector defect (main.py constructs one PersonDetector() and
-    hands it to _camera_loop, which calls detect(left) then detect(right) on
-    that same instance) causes the per-instance frame-skip cache to return
-    the same detection for the second call → disparity collapses to 0 →
-    distance collapses to the calibration intercept (0.5 m) → person_too_close
-    is reported True even when the person is safely 2.5 m away.
-
-    On the buggy code this test fails (state.person_too_close == True).
-    On the fix (one detector per camera) it passes.
+    Regression guard for the shared-detector defect: when one PersonDetector
+    is reused across both cameras, its per-instance frame-skip cache returns
+    the first frame's detection for the second call, disparity collapses to
+    0, distance collapses to the calibration intercept (0.5 m), and
+    person_too_close is reported True even when the person is safely 2.5 m
+    away. Per ADR-015, the loop now takes one detector per camera.
     """
     state, lock = _make_state()
     stop = threading.Event()
     camera_manager = _one_shot_camera_manager(stop)
 
-    # Production wiring as it stands in main.main(): ONE PersonDetector for
-    # both cameras. HOG side_effect lists what HOG would return on the first
-    # vs second physical call, although frame-skip means only the first is
-    # actually invoked per iteration on a shared instance.
-    detector = PersonDetector()
-    detector._hog = MagicMock()
-    detector._hog.detectMultiScale.side_effect = [
-        (_LEFT_BOX, None),
-        (_RIGHT_BOX, None),
-        (_LEFT_BOX, None),
-    ]
+    detector_left = _patched_detector(_LEFT_BOX)
+    detector_right = _patched_detector(_RIGHT_BOX)
 
     _camera_loop(
         camera_manager,
         FrameProcessor(),
-        detector,
+        detector_left,
+        detector_right,
         DepthEstimator(_CALIBRATION),
         state,
         lock,
@@ -119,6 +108,21 @@ def test_production_camera_loop_computes_correct_distance_from_stereo_pair():
 
     assert state.person_too_close is False, (
         "Pipeline must compute distance from disparity 50 (2.5 m, safe). "
-        "If reported True, the camera loop is using one PersonDetector for "
-        "both cameras and the frame-skip cache is collapsing disparity to 0."
+        "If reported True, the camera loop is sharing one PersonDetector "
+        "between cameras and the frame-skip cache is collapsing disparity to 0."
+    )
+
+
+def test_camera_loop_signature_takes_one_detector_per_camera():
+    """Structural regression guard: ADR-015 specifies one PersonDetector per
+    camera. If _camera_loop's signature is ever collapsed back to a single
+    `detector` argument, this test fails fast and points at the ADR — well
+    before the behavioural test above silently degrades.
+    """
+    import inspect
+
+    params = inspect.signature(_camera_loop).parameters
+    assert "detector_left" in params and "detector_right" in params, (
+        "_camera_loop must accept `detector_left` and `detector_right` "
+        "(see ADR-015). A single shared detector collapses stereo disparity."
     )
