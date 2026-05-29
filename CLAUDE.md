@@ -70,3 +70,29 @@ Windows desktop tray application that captures video from 2 USB cameras, runs im
 - Keep camera and audio logic modular for independent testing
 - Use `cv2.waitKey()` sparingly in development; can block tray interactions
 - Version bump and CHANGELOG before releasing new `.exe` to Windows
+
+## Git Workflow
+
+### Commit Granularity
+
+- **One commit per user story maximum.** Never bundle multiple stories into a single commit.
+- A story may span multiple commits (e.g., tests first, then implementation), but no single commit may touch more than one story's scope.
+- Commit message subject line format: `Story X.Y — <imperative description>`. Body: one sentence per logical chunk of work.
+
+### Branching and PRs
+
+- Every story is implemented on a dedicated branch named `feat/X.Y-short-title`.
+- Open a PR against `main` before merging — even when working alone. The PR is the code review gate and the CI trigger.
+- Do not commit story work directly to `main`. `main` receives merges only.
+- A story is not **Done** until: all ACs are ticked in `docs/epics-and-stories.md`, CI is green on the PR, and the branch is merged.
+
+### Self-Review Before Every PR
+
+Run this checklist before pushing for review — do not open a PR if any step fails:
+
+```bash
+pytest tests/unit/ -q                         # zero failures
+pytest tests/unit/ --cov --cov-fail-under=80  # 80% coverage gate
+black --check .                               # formatting
+ruff check .                                  # linting
+```
