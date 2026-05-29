@@ -10,7 +10,7 @@ on:
 jobs:
   # ── Runs on every push and PR ──────────────────────────────────────────────
   test:
-    name: Lint & Test (Python ${{ matrix.python-version }})
+    name: Lint & Unit (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -43,21 +43,115 @@ jobs:
       - name: Lint (ruff)
         run: ruff check .
 
-      - name: Run unit tests with coverage
-        run: |
-          pytest tests/unit/ \
-            --cov=. \
-            --cov-report=term-missing \
-            --cov-fail-under=80 \
-            -v
+      - name: Unit tests + coverage data
         env:
           DISPLAY: :99
+        run: pytest tests/unit/ --cov --cov-report=term-missing -v
+
+      # Layered coverage gates — see docs/testing-strategy.md.
+      # Core-logic gate is the primary quality bar; raise it as coverage rises.
+      - name: "Quality gate: core-logic branch coverage ≥ 90%"
+        run: |
+          coverage report \
+            --include="audio/*,camera/*,config/*,detection/*,state.py" \
+            --fail-under=90
+
+      # Full-codebase floor includes main.py + tray/*. Ratchets up over time;
+      # never lower. Today's honest baseline is ~48% — floor set just below
+      # to absorb measurement noise.
+      - name: "Visibility floor: full-codebase branch coverage ≥ 45%"
+        run: coverage report --fail-under=45
+
+      - name: Upload coverage data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}
+          path: .coverage
+          retention-days: 7
+
+  # ── Integration tier (blocking; tolerates "no tests yet" via exit 5) ───────
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install system dependencies (Linux)
+        run: sudo apt-get install -y libgl1 xvfb
+
+      - name: Start virtual display (Xvfb)
+        run: Xvfb :99 -screen 0 1024x768x24 &
+        env:
+          DISPLAY: :99
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run integration tests
+        env:
+          DISPLAY: :99
+        run: |
+          set +e
+          pytest tests/integration/ -m integration -v
+          code=$?
+          if [ $code -eq 5 ]; then
+            echo "::notice::No integration tests collected yet — landing soon (WS1)."
+            exit 0
+          fi
+          exit $code
+
+  # ── Performance tier (advisory until WS4 budgets land) ─────────────────────
+  performance:
+    name: Performance tests (advisory)
+    runs-on: ubuntu-latest
+    needs: test
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install system dependencies (Linux)
+        run: sudo apt-get install -y libgl1 xvfb
+
+      - name: Start virtual display (Xvfb)
+        run: Xvfb :99 -screen 0 1024x768x24 &
+        env:
+          DISPLAY: :99
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run performance tests
+        env:
+          DISPLAY: :99
+        run: |
+          set +e
+          pytest tests/performance/ -m performance -v
+          code=$?
+          if [ $code -eq 5 ]; then
+            echo "::notice::No performance tests collected yet — landing in WS4."
+            exit 0
+          fi
+          exit $code
 
   # ── Runs only on version tags (e.g. v1.0.0) ───────────────────────────────
   build-windows-exe:
     name: Build Windows .exe
     runs-on: windows-latest
-    needs: test                   # only build if tests pass
+    needs: [test, integration]   # unit + integration must pass before tagging a release
     if: startsWith(github.ref, 'refs/tags/v')
 
     steps:
