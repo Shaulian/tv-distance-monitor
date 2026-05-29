@@ -25,9 +25,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      # opencv-python needs these system libs on the GitHub Linux runner
+      # opencv-python needs libgl1; pystray needs an X display on headless Linux
       - name: Install system dependencies (Linux)
-        run: sudo apt-get install -y libgl1
+        run: sudo apt-get install -y libgl1 xvfb
+
+      - name: Start virtual display (Xvfb)
+        run: Xvfb :99 -screen 0 1024x768x24 &
+        env:
+          DISPLAY: :99
 
       - name: Install Python dependencies
         run: pip install -r requirements.txt
@@ -45,6 +50,8 @@ jobs:
             --cov-report=term-missing \
             --cov-fail-under=80 \
             -v
+        env:
+          DISPLAY: :99
 
   # ── Runs only on version tags (e.g. v1.0.0) ───────────────────────────────
   build-windows-exe:
