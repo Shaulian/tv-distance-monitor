@@ -24,7 +24,8 @@ __version__ = "0.1.0"
 def _camera_loop(
     camera_manager: CameraManager,
     frame_processor: FrameProcessor,
-    detector: PersonDetector,
+    detector_left: PersonDetector,
+    detector_right: PersonDetector,
     depth_estimator: DepthEstimator,
     app_state: AppState,
     lock: threading.Lock,
@@ -41,8 +42,11 @@ def _camera_loop(
 
         if left is not None and right is not None and not paused:
             left_n, right_n = frame_processor.process(left, right)
-            dets_l = detector.detect(left_n)
-            dets_r = detector.detect(right_n)
+            # Per ADR-015: one PersonDetector per camera. PersonDetector's
+            # frame-skip cache is per-instance; sharing one between cameras
+            # collapses stereo disparity to 0.
+            dets_l = detector_left.detect(left_n)
+            dets_r = detector_right.detect(right_n)
             distance = depth_estimator.estimate_distance(dets_l, dets_r)
             with lock:
                 app_state.person_too_close = (
@@ -120,7 +124,8 @@ def main() -> None:
             args=(
                 camera_manager,
                 FrameProcessor(),
-                PersonDetector(),
+                PersonDetector(),  # detector_left
+                PersonDetector(),  # detector_right — see ADR-015
                 depth_estimator,
                 state,
                 lock,
