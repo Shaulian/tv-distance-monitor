@@ -12,6 +12,8 @@ DEFAULTS: dict = {
     "drift_threshold_minor_cm": 5.0,
     "drift_threshold_significant_cm": 20.0,
     "alert_message": "Please move back from the TV",
+    "left_camera_index": 0,
+    "right_camera_index": 1,
     "calibration": {
         "valid": False,
         "slope": None,

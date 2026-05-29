@@ -5,9 +5,18 @@ import cv2
 
 
 class CameraManager:
-    def __init__(self, one_camera_mode: bool = False):
+    def __init__(
+        self,
+        one_camera_mode: bool = False,
+        left_camera_index: int = 0,
+        right_camera_index: int = 1,
+    ):
         self._one_camera_mode = one_camera_mode
-        self._caps: list = [None, None]
+        self._left_idx = left_camera_index
+        self._right_idx = right_camera_index
+        # Indexed by physical camera index; size covers both indices.
+        size = max(left_camera_index, right_camera_index) + 1
+        self._caps: list = [None] * size
 
     def open_cameras(self, app_state=None) -> tuple[bool, int]:
         if self._one_camera_mode:
@@ -17,7 +26,7 @@ class CameraManager:
         delay = 0.5
 
         while True:
-            for i in range(2):
+            for i in (self._left_idx, self._right_idx):
                 if self._caps[i] is None or not self._caps[i].isOpened():
                     cap = cv2.VideoCapture(i)
                     if cap.isOpened():
@@ -25,7 +34,11 @@ class CameraManager:
                     else:
                         cap.release()
 
-            count = sum(1 for c in self._caps if c is not None and c.isOpened())
+            count = sum(
+                1
+                for i in (self._left_idx, self._right_idx)
+                if self._caps[i] is not None and self._caps[i].isOpened()
+            )
             if count == 2:
                 break
 
@@ -36,7 +49,11 @@ class CameraManager:
             time.sleep(min(delay, remaining))
             delay *= 2
 
-        count = sum(1 for c in self._caps if c is not None and c.isOpened())
+        count = sum(
+            1
+            for i in (self._left_idx, self._right_idx)
+            if self._caps[i] is not None and self._caps[i].isOpened()
+        )
 
         if app_state is not None:
             app_state.num_cameras_online = count
@@ -44,9 +61,9 @@ class CameraManager:
         return (count > 0, count)
 
     def _open_one_camera(self, app_state=None) -> tuple[bool, int]:
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(self._left_idx)
         if cap.isOpened():
-            self._caps[0] = cap
+            self._caps[self._left_idx] = cap
             count = 1
         else:
             cap.release()
@@ -55,59 +72,28 @@ class CameraManager:
             app_state.num_cameras_online = count
         return (count > 0, count)
 
-    def wait_for_camera_permission(
-        self, app_state, timeout: float = 5.0, interval: float = 0.5
-    ) -> None:
-        """Wait up to `timeout` seconds for a camera that opened but yields no frames yet.
-
-        On macOS the system permission dialog is shown on the first capture attempt;
-        cv2.VideoCapture.read() returns (False, None) until access is granted.
-        """
-        cap = self._caps[0]
-        if cap is None or not cap.isOpened():
-            return  # camera didn't open at all; nothing to wait for
-
-        ret, _ = cap.read()
-        if ret:
-            return  # frames already arriving; no permission delay
-
-        app_state.awaiting_camera_permission = True
-        deadline = time.monotonic() + timeout
-
-        while time.monotonic() < deadline:
-            time.sleep(interval)
-            ret, _ = cap.read()
-            if ret:
-                app_state.awaiting_camera_permission = False
-                return
-
-        # Timeout reached; permission was never granted
-        app_state.awaiting_camera_permission = False
-        app_state.num_cameras_online = 0
+    def _read_single(self, idx: int):
+        cap = self._caps[idx] if idx < len(self._caps) else None
+        if cap is not None and cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                self._caps[idx] = None
+                return None
+            return frame
+        return None
 
     def read_frames(self) -> tuple:
         if self._one_camera_mode:
-            cap = self._caps[0]
+            cap = self._caps[self._left_idx] if self._left_idx < len(self._caps) else None
             if cap is not None and cap.isOpened():
                 ret, frame = cap.read()
                 if not ret:
-                    self._caps[0] = None
+                    self._caps[self._left_idx] = None
                     return (None, None)
                 return (frame, None)
             return (None, None)
 
-        frames = []
-        for i, cap in enumerate(self._caps):
-            if cap is not None and cap.isOpened():
-                ret, frame = cap.read()
-                if not ret:
-                    self._caps[i] = None  # invalidate so reconnect loop retries it
-                    frames.append(None)
-                else:
-                    frames.append(frame)
-            else:
-                frames.append(None)
-        return (frames[0], frames[1])
+        return (self._read_single(self._left_idx), self._read_single(self._right_idx))
 
     def detect_and_handle_drop(self, frames: tuple, app_state, lock: threading.Lock) -> None:
         left, right = frames
@@ -134,8 +120,37 @@ class CameraManager:
             time.sleep(interval)
             self._reconnect_once(app_state, lock)
 
+    def wait_for_camera_permission(
+        self, app_state, timeout: float = 5.0, interval: float = 0.5
+    ) -> None:
+        """Wait up to `timeout` seconds for a camera that opened but yields no frames yet.
+
+        On macOS the system permission dialog is shown on the first capture attempt;
+        cv2.VideoCapture.read() returns (False, None) until access is granted.
+        """
+        cap = self._caps[self._left_idx] if self._left_idx < len(self._caps) else None
+        if cap is None or not cap.isOpened():
+            return
+
+        ret, _ = cap.read()
+        if ret:
+            return
+
+        app_state.awaiting_camera_permission = True
+        deadline = time.monotonic() + timeout
+
+        while time.monotonic() < deadline:
+            time.sleep(interval)
+            ret, _ = cap.read()
+            if ret:
+                app_state.awaiting_camera_permission = False
+                return
+
+        app_state.awaiting_camera_permission = False
+        app_state.num_cameras_online = 0
+
     def release(self) -> None:
         for cap in self._caps:
             if cap is not None:
                 cap.release()
-        self._caps = [None, None]
+        self._caps = [None] * len(self._caps)

@@ -407,6 +407,57 @@ Stories are ordered by dependency: earlier stories must be complete before later
 
 ---
 
+### Story 11.5 — Settings Window UI Refinements
+
+**As a** developer testing on macOS  
+**I want** the settings window to be clear and easy to use  
+**So that** I can adjust configuration without guessing valid ranges or defaults
+
+**AC:**
+- [x] Every slider shows its current value as a live label (e.g. `"150 cm"`, `"100 ms"`)
+- [x] Every slider shows `min — default — max` hint text on one line beneath it
+- [x] Every slider has a `↺` reset button that snaps back to the factory default
+- [x] Min safe distance slider works in centimetres (50–300 cm, step 5); value stored in metres in settings file
+- [x] "Test Alert" button is disabled while TTS is speaking and shows `"▶ Testing..."` during playback
+- [x] Save button text reads `"Save and close"`
+- [x] Pure helper functions `cm_to_m`, `m_to_cm`, `build_save_data` are extracted and unit-tested
+
+---
+
+### Story 11.6 — Camera Left/Right Assignment
+
+**As a** user setting up the cameras  
+**I want** to designate which camera is on my left and which is on my right (from my perspective facing the TV)  
+**So that** the depth estimation uses the correct stereo geometry
+
+**AC:**
+- [x] `config/settings.py` DEFAULTS gains `left_camera_index: 0` and `right_camera_index: 1`
+- [x] `CameraManager.__init__` accepts `left_camera_index` and `right_camera_index`; `open_cameras` and `read_frames` use these indices so L/R assignment affects depth estimation
+- [x] `main.py` reads `left_camera_index` / `right_camera_index` from settings and passes them to `CameraManager`
+- [x] Settings window shows two `OptionMenu` dropdowns (Left camera / Right camera); changing one automatically swaps the other to avoid a collision
+- [x] A note clarifies "Left/right is from the viewer's perspective, facing the TV"
+- [x] Pure helper `swap_camera(old_left, old_right, changed, new_val)` is extracted and unit-tested
+- [x] Unit tests cover: CameraManager opens correct physical index for each L/R role, `read_frames` returns frames in correct L/R order after swapped assignment
+
+---
+
+### Story 11.7 — Live Camera Preview in Settings with Handoff
+
+**As a** developer testing on macOS  
+**I want** to see live camera previews in the settings window  
+**So that** I can verify camera assignment is correct before saving
+
+**AC:**
+- [x] Settings window shows two preview canvases (320×240), labelled `L` and `R`, refreshed at 10 fps
+- [x] Before the settings subprocess launches, the main app releases its camera captures so the subprocess can acquire them
+- [x] When the settings subprocess exits, the main app's reconnect loop re-acquires the cameras automatically
+- [x] `TrayApp` accepts an optional `on_before_settings` callback; it is called (on macOS) before `subprocess.Popen`
+- [x] In `--one-camera` mode only the left-camera preview is shown; the right canvas displays a placeholder
+- [x] `docs/decisions/ADR-013-camera-preview-handoff.md` documents the handoff pattern
+- [x] Unit tests verify `on_before_settings` is called before the subprocess is launched
+
+---
+
 ### Story 11.2 — Single-Camera Dev Mode
 
 **As a** developer on macOS with only a built-in webcam  

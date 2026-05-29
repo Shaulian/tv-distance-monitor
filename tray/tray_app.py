@@ -24,11 +24,21 @@ def _make_icon(color: str) -> Image.Image:
 
 
 class TrayApp:
-    def __init__(self, app_state, app_state_lock: threading.Lock, on_settings, on_quit):
+    def __init__(
+        self,
+        app_state,
+        app_state_lock: threading.Lock,
+        on_settings,
+        on_quit,
+        on_before_settings=None,
+        one_camera_mode: bool = False,
+    ):
         self._state = app_state
         self._lock = app_state_lock
         self._on_settings = on_settings
         self._on_quit = on_quit
+        self._on_before_settings = on_before_settings
+        self._one_camera_mode = one_camera_mode
         self._icon: pystray.Icon | None = None
 
     def run(self) -> None:
@@ -103,9 +113,14 @@ class TrayApp:
     def _open_settings(self, icon: pystray.Icon, item: pystray.MenuItem) -> None:
         if sys.platform == "darwin":
             # Tkinter and pystray both require the main thread on macOS (AppKit).
-            # A subprocess gets its own main thread, avoiding the crash.
+            # Release cameras first so the subprocess can open them for preview.
+            if self._on_before_settings is not None:
+                self._on_before_settings()
             script = Path(__file__).parent / "settings_subprocess.py"
-            subprocess.Popen([sys.executable, str(script)])
+            cmd = [sys.executable, str(script)]
+            if self._one_camera_mode:
+                cmd.append("--one-camera")
+            subprocess.Popen(cmd)
         else:
             threading.Thread(target=self._on_settings, daemon=True).start()
 

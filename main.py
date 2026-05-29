@@ -76,7 +76,11 @@ def main() -> None:
     lock = threading.Lock()
     stop = threading.Event()
 
-    camera_manager = CameraManager(one_camera_mode=args.one_camera)
+    camera_manager = CameraManager(
+        one_camera_mode=args.one_camera,
+        left_camera_index=settings.get("left_camera_index", 0),
+        right_camera_index=settings.get("right_camera_index", 1),
+    )
     camera_manager.open_cameras(state)
     camera_manager.wait_for_camera_permission(state)
 
@@ -141,7 +145,20 @@ def main() -> None:
         camera_manager.release()
         sys.exit(0)
 
-    TrayApp(state, lock, on_settings, on_quit).run()
+    def on_before_settings() -> None:
+        """Release cameras before the settings subprocess opens so it can acquire them."""
+        camera_manager.release()
+        with lock:
+            state.num_cameras_online = 0
+
+    TrayApp(
+        state,
+        lock,
+        on_settings,
+        on_quit,
+        on_before_settings=on_before_settings,
+        one_camera_mode=args.one_camera,
+    ).run()
 
 
 if __name__ == "__main__":

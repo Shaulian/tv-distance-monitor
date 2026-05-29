@@ -14,10 +14,16 @@ from state import AppState
 from tray.tray_app import TrayApp
 
 
-def _make_tray():
+def _make_tray(on_before_settings=None):
     state = AppState()
     lock = threading.Lock()
-    return TrayApp(state, lock, on_settings=MagicMock(), on_quit=MagicMock())
+    return TrayApp(
+        state,
+        lock,
+        on_settings=MagicMock(),
+        on_quit=MagicMock(),
+        on_before_settings=on_before_settings,
+    )
 
 
 class TestSettingsDispatch:
@@ -72,3 +78,46 @@ class TestSettingsDispatch:
             tray._open_settings(MagicMock(), MagicMock())
         mock_popen.assert_not_called()
         mock_thread.assert_called_once()
+
+    def test_on_before_settings_called_before_subprocess_on_macos(self):
+        """on_before_settings must fire before subprocess.Popen on macOS."""
+        call_order = []
+        before_cb = MagicMock(side_effect=lambda: call_order.append("before"))
+        tray = _make_tray(on_before_settings=before_cb)
+
+        with (
+            patch("tray.tray_app.sys") as mock_sys,
+            patch(
+                "tray.tray_app.subprocess.Popen",
+                side_effect=lambda *a, **kw: call_order.append("popen"),
+            ),
+        ):
+            mock_sys.platform = "darwin"
+            mock_sys.executable = "/usr/bin/python3"
+            tray._open_settings(MagicMock(), MagicMock())
+
+        assert call_order == ["before", "popen"], f"Expected before → popen, got {call_order}"
+
+    def test_on_before_settings_not_called_when_none(self):
+        """No crash if on_before_settings is not provided."""
+        tray = _make_tray(on_before_settings=None)
+        with (
+            patch("tray.tray_app.sys") as mock_sys,
+            patch("tray.tray_app.subprocess.Popen"),
+        ):
+            mock_sys.platform = "darwin"
+            mock_sys.executable = "/usr/bin/python3"
+            tray._open_settings(MagicMock(), MagicMock())  # must not raise
+
+    def test_on_before_settings_not_called_on_windows(self):
+        """on_before_settings must NOT be called when opening on Windows (thread path)."""
+        before_cb = MagicMock()
+        tray = _make_tray(on_before_settings=before_cb)
+        with (
+            patch("tray.tray_app.sys") as mock_sys,
+            patch("tray.tray_app.threading.Thread") as mock_thread,
+        ):
+            mock_sys.platform = "win32"
+            mock_thread.return_value.start = MagicMock()
+            tray._open_settings(MagicMock(), MagicMock())
+        before_cb.assert_not_called()
