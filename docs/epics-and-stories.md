@@ -69,7 +69,7 @@ Stories are ordered by dependency: earlier stories must be complete before later
 - [x] `open_cameras()` retries with exponential backoff (500ms, 1s, 2s…) for up to 10 seconds
 - [x] Returns `(True, 2)`, `(True, 1)`, or `(False, 0)` correctly for both-open, one-open, none-open cases
 - [x] `read_frames()` returns `(None, frame)` or `(frame, None)` when one camera drops mid-run
-- [ ] `/check-cameras` skill passes
+- [x] `/check-cameras` skill passes
 - [x] Unit tests mock `cv2.VideoCapture` and verify backoff timing and return values
 - [x] `AppState.num_cameras_online` is updated correctly after `open_cameras()`
 
@@ -126,7 +126,7 @@ Stories are ordered by dependency: earlier stories must be complete before later
 - [x] Returns empty list (not None) when no person detected
 - [x] Unit test with a fixture frame containing a person: detector returns ≥ 1 result
 - [x] Unit test with a blank/empty fixture frame: detector returns `[]`
-- [ ] `/test` skill passes
+- [x] `/test` skill passes
 - [x] `docs/decisions/ADR-004-person-detection-approach.md` documents choice of HOG vs. ML models (MediaPipe, YOLO) and why HOG was chosen (offline, no model file, good enough for close-range)
 
 ---
