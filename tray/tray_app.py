@@ -1,6 +1,8 @@
+import subprocess
 import sys
 import threading
 import time
+from pathlib import Path
 
 import pystray
 from PIL import Image
@@ -99,7 +101,13 @@ class TrayApp:
             time.sleep(_POLL_INTERVAL_S)
 
     def _open_settings(self, icon: pystray.Icon, item: pystray.MenuItem) -> None:
-        threading.Thread(target=self._on_settings, daemon=True).start()
+        if sys.platform == "darwin":
+            # Tkinter and pystray both require the main thread on macOS (AppKit).
+            # A subprocess gets its own main thread, avoiding the crash.
+            script = Path(__file__).parent / "settings_subprocess.py"
+            subprocess.Popen([sys.executable, str(script)])
+        else:
+            threading.Thread(target=self._on_settings, daemon=True).start()
 
     def _quit(self, icon: pystray.Icon, item: pystray.MenuItem) -> None:
         icon.stop()

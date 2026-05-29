@@ -8,6 +8,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **macOS settings crash** — Opening Settings from the tray caused an `NSInvalidArgumentException` crash because Tkinter and pystray both require the AppKit main thread. Fixed by launching the settings window as a separate subprocess (`tray/settings_subprocess.py`) on macOS, giving Tkinter its own main thread. Windows behaviour unchanged. (ADR-012)
+
 ### Added — Epic 11: macOS Development & Testing
 
 - **Story 11.1** — `run_dev.sh`: one-command macOS setup script; creates venv, installs deps, verifies all imports (with `brew install python-tk@3.11` hint for missing tkinter), runs unit tests. Updated `docs/environment-setup.md` with quick-start instructions.
