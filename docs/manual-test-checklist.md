@@ -2,6 +2,12 @@
 
 Run this checklist on a real Windows 10/11 machine before every release. Check each item and record the date and result.
 
+> **Note (ADR-017):** the CI performance job (`tests/performance/`) measures
+> regression-guard budgets on a headless Linux runner with HOG and TTS mocked.
+> The real-hardware budgets — 80 ms frame loop, 5 s cold start, 150 MB after
+> 30 minutes — can only be validated here. A green CI is **necessary but not
+> sufficient**; do not skip this checklist on the basis of "CI passed".
+
 **Release version:** ___________  
 **Test date:** ___________  
 **Tester:** ___________  
@@ -16,7 +22,9 @@ Run this checklist on a real Windows 10/11 machine before every release. Check e
 - [ ] Double-click `.exe` — Windows SmartScreen warning appears; click "More info → Run Anyway"
 - [ ] App starts; tray icon appears in the system tray area (bottom-right taskbar)
 - [ ] No error dialogs appear on startup
-- [ ] Task Manager shows the process running under 150 MB memory
+- [ ] Task Manager shows the process running under 150 MB memory **after 30 minutes of idle monitoring** (strategy budget; see ADR-017)
+- [ ] First frame-loop iteration on real hardware (Task Manager / a quick log probe) completes inside the 80 ms strategy budget
+- [ ] Cold start from a fresh Windows boot to "tray icon visible, monitoring active" inside the 5 s strategy budget
 
 ---
 
