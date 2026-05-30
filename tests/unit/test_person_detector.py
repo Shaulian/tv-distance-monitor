@@ -68,6 +68,21 @@ def test_first_call_processes_frame():
     detector._hog.detectMultiScale.assert_called_once()
 
 
+def test_first_call_processes_frame_with_real_constructor():
+    # WS5 mutmut catch: _make_detector_with_mock_hog above bypasses __init__
+    # via __new__, so it cannot detect a mutation in __init__ that flips
+    # _frame_count to a non-zero start (which would silently skip the first
+    # frame). This test uses the regular constructor and patches _hog
+    # afterwards so the contract "first call always processes" is enforced
+    # against the real __init__.
+    detector = PersonDetector()
+    detector._hog = MagicMock()
+    detector._hog.detectMultiScale.return_value = (FAKE_BOX, None)
+    result = detector.detect(BLANK)
+    detector._hog.detectMultiScale.assert_called_once()
+    assert len(result) == 1  # the patched box was actually returned, not the empty cache
+
+
 def test_second_and_third_calls_are_skipped():
     detector = _make_detector_with_mock_hog()
     detector.detect(BLANK)  # call 1: processed

@@ -191,3 +191,36 @@ def test_assess_proximity_beyond_max_plausible_distance_returns_out_of_range_fai
     )
     assert too_close is True
     assert reason == "out_of_range"
+
+
+# Boundary tests added during WS5 mutmut triage — kill mutants that flip
+# the sanity-ceiling constant (10.0 → 11.0) or its comparison (> → >=).
+
+
+def test_assess_proximity_exactly_at_10_metres_is_ok_not_out_of_range():
+    # Distance == 10.0 m exactly. Strict `> 10.0` keeps it inside the
+    # plausible range; a mutation to `>= 10.0` would flip this to
+    # out_of_range, and this assertion fails that mutation.
+    # disparity 237.5 → 0.5 + 0.04 * 237.5 = 10.0
+    # Round to disparity 237.5 isn't expressible as ints; use a different
+    # calibration to land cleanly on 10.0:  slope=0.05, intercept=0.0,
+    # disparity=200 → distance=10.0.
+    calib = {"slope": 0.05, "intercept": 0.0}
+    too_close, reason = DepthEstimator(calib).assess_proximity(
+        [_det(350, 100)], [_det(150, 100)], MIN_SAFE
+    )
+    assert reason == "ok"
+    assert too_close is False  # 10 > 1.5 safe
+
+
+def test_assess_proximity_just_past_10_metres_is_out_of_range():
+    # Distance 10.5 m → strictly past the sanity ceiling. A mutation that
+    # raises the constant from 10.0 to 11.0 would mis-classify this as
+    # "ok"; this assertion fails that mutation.
+    # slope=0.05, intercept=0.0, disparity=210 → 10.5 m
+    calib = {"slope": 0.05, "intercept": 0.0}
+    too_close, reason = DepthEstimator(calib).assess_proximity(
+        [_det(360, 100)], [_det(150, 100)], MIN_SAFE
+    )
+    assert reason == "out_of_range"
+    assert too_close is True

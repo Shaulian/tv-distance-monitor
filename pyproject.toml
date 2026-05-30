@@ -25,3 +25,11 @@ omit = ["tests/*", "venv/*", "*/__pycache__/*", "tvdm.spec"]
 
 [tool.coverage.report]
 show_missing = true
+
+# Mutation testing — see ADR-018. Scoped to detection/ (the highest-stakes
+# pure-logic modules: stereo depth + fail-safe policy + HOG cache). Runs
+# weekly in CI; a per-PR run is too slow.
+[tool.mutmut]
+paths_to_mutate = "detection/"
+tests_dir = "tests/unit/"
+runner = "python -m pytest tests/unit/test_depth_estimator.py tests/unit/test_depth_estimator_properties.py tests/unit/test_person_detector.py -x --tb=no -q"

@@ -1,0 +1,59 @@
+name: Mutation Testing
+
+# Per ADR-018: mutation testing on detection/ runs out-of-band, not on every
+# PR. Per-PR runs are too slow (~1–2 min today, will grow as the module
+# expands), and the surviving mutants are triaged offline. CI here exists to
+# track the kill-rate baseline so a regression is visible.
+
+on:
+  schedule:
+    # Mondays 06:00 UTC — surfaces fresh survivors at the start of the week.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      mutmut_paths:
+        description: "Paths to mutate (default: detection/)"
+        required: false
+        default: "detection/"
+
+jobs:
+  mutmut:
+    name: Mutation testing on core modules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install system dependencies (Linux)
+        run: sudo apt-get install -y libgl1
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run mutmut on detection/
+        # The pyproject [tool.mutmut] section pins the scope and the runner.
+        # `mutmut run` exits non-zero when survivors exist — we capture the
+        # results and print them, but do not fail the workflow on survivors:
+        # the policy in ADR-018 is "track + triage", not "block".
+        run: |
+          set +e
+          mutmut run
+          echo "---"
+          mutmut results
+
+      - name: Generate HTML survivor report
+        if: always()
+        run: mutmut html || true
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutmut-html-${{ github.run_id }}
+          path: html/
+          retention-days: 30

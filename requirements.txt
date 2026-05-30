@@ -5,5 +5,7 @@ pystray==0.19.5
 Pillow==11.2.1
 pytest==9.0.3
 pytest-cov==7.1.0
+hypothesis==6.155.1
+mutmut==2.5.1
 black==26.5.1
 ruff==0.15.15
