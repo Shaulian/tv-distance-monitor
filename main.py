@@ -47,11 +47,14 @@ def _camera_loop(
             # collapses stereo disparity to 0.
             dets_l = detector_left.detect(left_n)
             dets_r = detector_right.detect(right_n)
-            distance = depth_estimator.estimate_distance(dets_l, dets_r)
             with lock:
-                app_state.person_too_close = (
-                    distance is not None and distance < app_state.min_safe_distance_m
+                # Per ADR-016: fail loud, not silent. assess_proximity
+                # defaults person_too_close to True when ≥1 camera sees a
+                # person but stereo distance cannot be trusted.
+                too_close, _reason = depth_estimator.assess_proximity(
+                    dets_l, dets_r, app_state.min_safe_distance_m
                 )
+                app_state.person_too_close = too_close
 
         time.sleep(interval_ms / 1000)
 

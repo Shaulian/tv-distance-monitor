@@ -40,6 +40,7 @@ _MIN_SAFE_DISTANCE_M = 1.5
 # the (unreliable) ability of HOG to detect a person in a synthetic frame.
 _LEFT_BOX = np.array([[180, 100, 40, 200]], dtype=np.int32)  # cx = 200
 _RIGHT_BOX = np.array([[130, 100, 40, 200]], dtype=np.int32)  # cx = 150 → disparity 50
+_EMPTY_BOXES = np.empty((0, 4), dtype=np.int32)  # no person detected
 
 
 def _make_state() -> tuple[AppState, threading.Lock]:
@@ -125,4 +126,46 @@ def test_camera_loop_signature_takes_one_detector_per_camera():
     assert "detector_left" in params and "detector_right" in params, (
         "_camera_loop must accept `detector_left` and `detector_right` "
         "(see ADR-015). A single shared detector collapses stereo disparity."
+    )
+
+
+def test_left_only_detection_triggers_fail_safe_person_too_close():
+    """A person is visible to the LEFT camera only (right-camera detection
+    misses — partial occlusion, glare, momentary tracking loss). Stereo
+    distance cannot be computed reliably.
+
+    Per ADR-016 ("degrade loud, not silent"), the camera loop must default
+    person_too_close to True in this case rather than silently reporting
+    False. Reporting False here is a safety regression: a child is plausibly
+    in frame, the system cannot confirm they are at a safe distance, yet no
+    alert fires.
+
+    On the unfixed code DepthEstimator.estimate_distance returns None on an
+    unmatched pair, _camera_loop sets person_too_close = (distance is not
+    None and …) → False, and this test fails. After WS2 wires the loop to
+    DepthEstimator.assess_proximity (fail-safe policy) it passes.
+    """
+    state, lock = _make_state()
+    stop = threading.Event()
+    camera_manager = _one_shot_camera_manager(stop)
+
+    detector_left = _patched_detector(_LEFT_BOX)
+    detector_right = _patched_detector(_EMPTY_BOXES)  # right camera misses the person
+
+    _camera_loop(
+        camera_manager,
+        FrameProcessor(),
+        detector_left,
+        detector_right,
+        DepthEstimator(_CALIBRATION),
+        state,
+        lock,
+        stop,
+    )
+
+    assert state.person_too_close is True, (
+        "Fail-safe regression (ADR-016): when at least one camera sees a "
+        "person and stereo distance cannot be computed, the camera loop "
+        "must default person_too_close to True. Reporting False here is a "
+        "silent safety failure for the child-distance monitor."
     )

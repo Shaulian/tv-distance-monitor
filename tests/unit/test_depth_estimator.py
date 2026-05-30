@@ -4,6 +4,13 @@ from detection.depth_estimator import DepthEstimator
 
 CALIB = {"slope": 0.1, "intercept": 0.5}
 
+# Calibration tuned for assess_proximity bound tests:
+#   distance = intercept + slope * disparity
+#   slope=0.04, intercept=0.5 → disparity 50 → 2.5 m, disparity 0 → 0.5 m,
+#   disparity 250 → 10.5 m (just past the 10.0 m sanity ceiling).
+PROX_CALIB = {"slope": 0.04, "intercept": 0.5}
+MIN_SAFE = 1.5  # m
+
 
 def _det(cx, cy):
     """Minimal detection tuple (x, y, w, h, cx, cy)."""
@@ -82,3 +89,105 @@ def test_one_pair_matched_one_unmatched_returns_matched_distance():
     # person B vs right[1]: |50-80|=30 → no match
     # min(5.5, 15.5) = 5.5
     assert dist == pytest.approx(5.5, rel=0.05)
+
+
+# --- assess_proximity (ADR-016 fail-safe degradation contract) ---
+
+
+def test_assess_proximity_no_detections_anywhere_returns_no_person_safe():
+    too_close, reason = DepthEstimator(PROX_CALIB).assess_proximity([], [], MIN_SAFE)
+    assert too_close is False
+    assert reason == "no_person"
+
+
+def test_assess_proximity_left_only_detection_returns_unmatched_fail_safe():
+    # Right camera missed the person → cannot compute distance → fail loud, not silent.
+    too_close, reason = DepthEstimator(PROX_CALIB).assess_proximity([_det(200, 100)], [], MIN_SAFE)
+    assert too_close is True
+    assert reason == "unmatched"
+
+
+def test_assess_proximity_right_only_detection_returns_unmatched_fail_safe():
+    too_close, reason = DepthEstimator(PROX_CALIB).assess_proximity([], [_det(150, 100)], MIN_SAFE)
+    assert too_close is True
+    assert reason == "unmatched"
+
+
+def test_assess_proximity_vertical_mismatch_returns_unmatched_fail_safe():
+    # Both cameras see a person but vertical centres differ >20 px (cy 50 vs 100)
+    # → estimate_distance returns None → fail-safe True.
+    too_close, reason = DepthEstimator(PROX_CALIB).assess_proximity(
+        [_det(200, 50)], [_det(150, 100)], MIN_SAFE
+    )
+    assert too_close is True
+    assert reason == "unmatched"
+
+
+def test_assess_proximity_safe_distance_returns_false_ok():
+    # disparity 50 → distance 0.5 + 0.04 * 50 = 2.5 m → 2.5 > 1.5 → safe.
+    too_close, reason = DepthEstimator(PROX_CALIB).assess_proximity(
+        [_det(200, 100)], [_det(150, 100)], MIN_SAFE
+    )
+    assert too_close is False
+    assert reason == "ok"
+
+
+def test_assess_proximity_close_distance_returns_true_ok():
+    # disparity 10 → distance 0.5 + 0.04 * 10 = 0.9 m → 0.9 < 1.5 → too close.
+    too_close, reason = DepthEstimator(PROX_CALIB).assess_proximity(
+        [_det(160, 100)], [_det(150, 100)], MIN_SAFE
+    )
+    assert too_close is True
+    assert reason == "ok"
+
+
+def test_assess_proximity_exactly_min_safe_distance_is_not_too_close():
+    # Choose disparity so distance == MIN_SAFE exactly: 0.5 + 0.04 * 25 = 1.5.
+    # Strict `<` means "exactly at the safety boundary" is reported as safe,
+    # matching the historical semantics in main._camera_loop.
+    too_close, reason = DepthEstimator(PROX_CALIB).assess_proximity(
+        [_det(175, 100)], [_det(150, 100)], MIN_SAFE
+    )
+    assert too_close is False
+    assert reason == "ok"
+
+
+def test_assess_proximity_negative_distance_returns_out_of_range_fail_safe():
+    # Right cx > left cx → negative disparity → distance < 0 (physically impossible).
+    # disparity -50 → distance 0.5 + 0.04 * -50 = -1.5 m.
+    too_close, reason = DepthEstimator(PROX_CALIB).assess_proximity(
+        [_det(100, 100)], [_det(150, 100)], MIN_SAFE
+    )
+    assert too_close is True
+    assert reason == "out_of_range"
+
+
+def test_assess_proximity_zero_distance_returns_out_of_range_fail_safe():
+    # Tuned so distance lands exactly at 0.0: slope 0.04, intercept 0.5 →
+    # disparity must satisfy 0.5 + 0.04 * d = 0 → d = -12.5 (rounded -13 for ints).
+    # Easier: use a different intercept-zero scenario via a custom calibration.
+    calib = {"slope": 0.04, "intercept": 0.0}
+    too_close, reason = DepthEstimator(calib).assess_proximity(
+        [_det(150, 100)], [_det(150, 100)], MIN_SAFE
+    )
+    assert too_close is True
+    assert reason == "out_of_range"
+
+
+def test_assess_proximity_at_max_plausible_distance_is_ok():
+    # disparity 237.5 ≈ 238 → distance 0.5 + 0.04 * 238 = 10.02 m, just over.
+    # Pick disparity 237 → distance = 0.5 + 0.04 * 237 = 9.98 m, within the 10 m ceiling.
+    too_close, reason = DepthEstimator(PROX_CALIB).assess_proximity(
+        [_det(387, 100)], [_det(150, 100)], MIN_SAFE
+    )
+    assert too_close is False
+    assert reason == "ok"
+
+
+def test_assess_proximity_beyond_max_plausible_distance_returns_out_of_range_fail_safe():
+    # disparity 1000 → distance 0.5 + 0.04 * 1000 = 40.5 m → out of sanity range.
+    too_close, reason = DepthEstimator(PROX_CALIB).assess_proximity(
+        [_det(1150, 100)], [_det(150, 100)], MIN_SAFE
+    )
+    assert too_close is True
+    assert reason == "out_of_range"
