@@ -24,6 +24,7 @@ Use `docs/decisions/ADR-000-template.md` when writing a new ADR.
 | [ADR-014](ADR-014-layered-coverage-gates.md) | Layered Coverage Gates (Core High-Bar 90% + Full-Codebase Floor 45%, no omit, branch coverage) | Accepted |
 | [ADR-015](ADR-015-per-camera-person-detector.md) | One PersonDetector Instance Per Camera (fixes shared frame-skip cache collapsing stereo disparity) | Accepted |
 | [ADR-016](ADR-016-fail-safe-degradation.md) | Fail-Safe Degradation Policy ("degrade loud, not silent" — DepthEstimator.assess_proximity with sanity bounds) | Accepted |
+| [ADR-017](ADR-017-ci-performance-budgets.md) | CI-Enforced Performance Budgets (regression guards for camera-loop iter, memory, startup; hardware budgets stay manual) | Accepted |
 
 ## How to Add a New ADR
 
