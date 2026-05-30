@@ -39,17 +39,23 @@ Rules:
 
 ## Step 4 — Self-Review Checklist
 
-Before asking for review or running CI, check each item yourself:
+Before asking for review or running CI, check each item yourself. The
+commands here mirror what CI runs (`.github/workflows/ci.yml`); if
+something passes locally and fails in CI, the locally-run command list
+below is wrong — fix it.
 
 - [ ] All AC from the story are satisfied
-- [ ] `pytest tests/unit/` passes with zero failures
 - [ ] `black --check .` passes (or run `black .` to fix)
 - [ ] `ruff check .` passes
-- [ ] `pytest tests/unit/ --cov --cov-fail-under=80` passes for the modified module
+- [ ] `pytest tests/unit/ tests/integration/` passes — zero failures
+- [ ] `pytest tests/performance/ -m performance` passes — perf budgets per **ADR-017**
+- [ ] `coverage report --include="audio/*,camera/*,config/*,detection/*,state.py" --fail-under=90` passes — core-logic gate per **ADR-014**
+- [ ] `coverage report --fail-under=55` passes — full-codebase visibility floor per **ADR-014** (ratchets up; never down)
 - [ ] No hardcoded file paths (use `pathlib.Path`)
 - [ ] No secrets, API keys, or personal data in code or test fixtures
 - [ ] If a new significant decision was made: ADR written and added to `docs/decisions/README.md`
 - [ ] If the story touches the threading model: verify no blocking calls are made while holding `app_state_lock`
+- [ ] If the story changes the fail-safe contract (ADR-016) or sanity bounds: the property tests in `tests/unit/test_depth_estimator_properties.py` are updated *first* so the contract change is reflected in invariants, not just examples
 
 ---
 
@@ -67,15 +73,30 @@ The PR is not merged until all review comments are resolved and CI is green.
 
 ---
 
-## Step 6 — Integration Check
+## Step 6 — Integration Check (mandatory; not "if they exist")
 
-After merge, run the relevant integration test(s) if they exist:
+The integration tier is **enforced** by CI (the dedicated `integration`
+job; see `.github/workflows/ci.yml`). Before the PR is opened, you must:
 
-```bash
-pytest tests/integration/ -m integration -v
-```
+- [ ] Run `pytest tests/integration/ -m integration -v` locally with the
+      story's branch checked out, and confirm it is green.
+- [ ] **If this story touches a module boundary that has no existing
+      integration test**, write one in `tests/integration/` *as part of
+      this story* — not as a follow-up. A "module boundary" means two
+      production modules that have not been wired together by a test
+      before (e.g. camera manager + frame processor, main startup +
+      tray callbacks).
+- [ ] If this is a bug-fix story, the integration test must be the one
+      that would have caught the bug. Land it red (one commit) and green
+      (the next) on the same branch so reviewers can see the proof.
 
-If this story is the first to touch a module boundary (e.g., camera manager + frame processor working together for the first time), write an integration test now even if it wasn't required by the story.
+This step was conditional in v0.1.0 ("if they exist"). A P1 functional
+defect (the shared `PersonDetector`, fixed in WS1 / ADR-015) shipped
+through the gap that conditional language opened. Step 6 is mandatory now.
+
+For the bug-test-first pattern specifically: see WS1's PR for the
+canonical example (`tests/integration/test_camera_to_depth_pipeline.py`
+landed failing in commit `(1/2)`, fixed in `(2/2)`).
 
 ---
 

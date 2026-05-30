@@ -26,6 +26,7 @@ Use `docs/decisions/ADR-000-template.md` when writing a new ADR.
 | [ADR-016](ADR-016-fail-safe-degradation.md) | Fail-Safe Degradation Policy ("degrade loud, not silent" — DepthEstimator.assess_proximity with sanity bounds) | Accepted |
 | [ADR-017](ADR-017-ci-performance-budgets.md) | CI-Enforced Performance Budgets (regression guards for camera-loop iter, memory, startup; hardware budgets stay manual) | Accepted |
 | [ADR-018](ADR-018-mutation-and-property-testing.md) | Mutation Testing + Property Testing as Test-Quality Tools (mutmut weekly, Hypothesis per PR) | Accepted |
+| [ADR-019](ADR-019-definition-of-done.md) | Definition of Done — Per-Story PR + Mandatory Integration Tests + Enforced Gates (consolidates ADRs 014/016/017/018) | Accepted |
 
 ## How to Add a New ADR
 

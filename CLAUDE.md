@@ -88,11 +88,14 @@ Windows desktop tray application that captures video from 2 USB cameras, runs im
 
 ### Self-Review Before Every PR
 
-Run this checklist before pushing for review — do not open a PR if any step fails:
+Run this checklist before pushing for review — do not open a PR if any step fails. The full annotated checklist with rationale lives in `docs/story-workflow.md` § Step 4; this block is the minimum command set, mirroring CI.
 
 ```bash
-pytest tests/unit/ -q                         # zero failures
-pytest tests/unit/ --cov --cov-fail-under=80  # 80% coverage gate
-black --check .                               # formatting
-ruff check .                                  # linting
+black --check .                                                                                     # formatting
+ruff check .                                                                                        # linting
+pytest tests/unit/ tests/integration/ -q                                                            # unit + integration (zero failures)
+pytest tests/performance/ -m performance -q                                                         # perf budgets (ADR-017)
+pytest tests/unit/ tests/integration/ --cov --cov-report=                                           # coverage data
+coverage report --include="audio/*,camera/*,config/*,detection/*,state.py" --fail-under=90          # core-logic gate (ADR-014)
+coverage report --fail-under=55                                                                     # full-codebase floor (ADR-014)
 ```
