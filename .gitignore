@@ -11,3 +11,11 @@ build/
 .eggs/
 *.spec
 .DS_Store
+
+# Mutation testing artifacts (see ADR-018)
+.mutmut-cache
+mutants/
+.coverage
+.pytest_cache/
+.ruff_cache/
+.hypothesis/
