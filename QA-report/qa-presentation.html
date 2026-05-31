@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TV Distance Monitor — QA Report</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/theme/white.css" id="theme" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/plugin/highlight/monokai.css" />
+
+  <style>
+    :root {
+      --accent: #2563eb;
+      --accent-dark: #1e3a8a;
+      --green: #16a34a;
+      --red: #dc2626;
+      --amber: #d97706;
+      --grey: #6b7280;
+      --grey-bg: #f4f4f5;
+    }
+
+    .reveal {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 28px;
+    }
+    .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+      font-family: inherit;
+      text-transform: none;
+      letter-spacing: -0.01em;
+      font-weight: 700;
+      color: #111827;
+    }
+    .reveal h1 { font-size: 2.2em; }
+    .reveal h2 { font-size: 1.5em; margin-bottom: 0.6em; }
+    .reveal h3 { font-size: 1.1em; color: var(--accent-dark); margin-top: 0.4em; }
+    .reveal section { text-align: left; }
+    .reveal section.title { text-align: center; }
+    .reveal .subtitle {
+      color: var(--grey);
+      font-size: 0.55em;
+      font-weight: 500;
+      margin-top: 1em;
+    }
+    .reveal .meta {
+      color: var(--grey);
+      font-size: 0.4em;
+      margin-top: 2em;
+    }
+    .reveal ul, .reveal ol { margin: 0.3em 0 0.8em 1.2em; }
+    .reveal li { margin: 0.25em 0; }
+    .reveal table {
+      margin: 0.4em 0;
+      font-size: 0.7em;
+      border-collapse: collapse;
+      width: 100%;
+    }
+    .reveal th, .reveal td {
+      padding: 0.4em 0.7em;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+    }
+    .reveal th {
+      background: var(--grey-bg);
+      font-weight: 600;
+      color: #111827;
+    }
+    .reveal td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .reveal .pill {
+      display: inline-block;
+      padding: 0.15em 0.6em;
+      border-radius: 999px;
+      font-size: 0.75em;
+      font-weight: 600;
+    }
+    .reveal .pill.good { background: #dcfce7; color: var(--green); }
+    .reveal .pill.bad { background: #fee2e2; color: var(--red); }
+    .reveal .pill.warn { background: #fef3c7; color: var(--amber); }
+    .reveal .pill.neutral { background: var(--grey-bg); color: #374151; }
+    .reveal blockquote {
+      font-size: 0.85em;
+      border-left: 4px solid var(--accent);
+      padding: 0.6em 1em;
+      margin: 0.6em 0;
+      background: #eff6ff;
+      color: #111827;
+      font-style: normal;
+    }
+    .reveal pre {
+      font-size: 0.55em;
+      box-shadow: none;
+      border-radius: 6px;
+    }
+    .reveal code {
+      font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+    }
+    .reveal .small { font-size: 0.7em; }
+    .reveal .smaller { font-size: 0.6em; }
+    .reveal .footnote {
+      position: absolute;
+      bottom: 0.6em;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: var(--grey);
+      font-size: 0.4em;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1em;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.8em;
+    }
+    .card {
+      background: #fafafa;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 0.8em 1em;
+    }
+    .card h4 { color: var(--accent-dark); margin: 0 0 0.3em 0; font-size: 1em; }
+    .card .stat {
+      font-size: 1.8em;
+      font-weight: 700;
+      color: #111827;
+      font-variant-numeric: tabular-nums;
+    }
+    .card .label { color: var(--grey); font-size: 0.7em; margin-top: 0.2em; }
+    .arrow-flow {
+      display: flex;
+      align-items: center;
+      gap: 0.6em;
+      flex-wrap: wrap;
+      font-size: 0.8em;
+      margin: 0.4em 0;
+    }
+    .arrow-flow .step {
+      background: #fafafa;
+      border: 1px solid #e5e7eb;
+      padding: 0.5em 0.8em;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+    .arrow-flow .step.bad { border-color: var(--red); background: #fef2f2; }
+    .arrow-flow .arr { color: var(--grey); }
+    .legend {
+      font-size: 0.65em;
+      color: var(--grey);
+      margin-top: 0.4em;
+    }
+    .pyramid {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3em;
+      margin: 0.8em 0;
+    }
+    .pyramid .level {
+      padding: 0.6em 1.2em;
+      text-align: center;
+      border-radius: 6px;
+      color: white;
+      font-weight: 600;
+      font-size: 0.85em;
+      line-height: 1.2;
+    }
+    .pyramid .level .ct { font-size: 0.7em; font-weight: 400; opacity: 0.9; }
+    .pyramid .unit { background: var(--accent); width: 76%; }
+    .pyramid .integration { background: #7c3aed; width: 58%; }
+    .pyramid .performance { background: var(--amber); width: 40%; }
+    .pyramid .mutation { background: var(--green); width: 28%; }
+    .pyramid .manual { background: var(--grey); width: 18%; }
+  </style>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- 1: Title -->
+      <section class="title">
+        <h1>TV Distance Monitor</h1>
+        <h2 style="font-weight: 500; color: var(--grey); border: none;">QA Report</h2>
+        <p class="subtitle">
+          Testing methodology, coverage model, tier spread, and a deep-dive on the stereo depth pipeline
+        </p>
+        <p class="meta">
+          QA Lead &middot; v0.2.0 post-hardening &middot; 2026-05-30
+        </p>
+      </section>
+
+      <!-- 2: Agenda -->
+      <section>
+        <h2>Agenda</h2>
+        <ol>
+          <li>Testing methodology</li>
+          <li>Coverage — how we measure it, and the honest baseline</li>
+          <li>Test spread across tiers</li>
+          <li>Test plan highlights — the seven areas</li>
+          <li><strong>Deep dive:</strong> the stereo depth pipeline (WS1 P1 defect)</li>
+          <li>Mutation + property testing — beyond coverage</li>
+          <li>CI enforcement</li>
+          <li>Workplan retrospective &amp; what's next</li>
+        </ol>
+      </section>
+
+      <!-- 3: Methodology — Philosophy -->
+      <section>
+        <h2>Methodology — Philosophy</h2>
+        <ul>
+          <li><strong>Tests verify behavior, not implementation.</strong> A failing test should tell you what broke, not how.</li>
+          <li><strong>Every bug means a missing test.</strong> Add it <em>before</em> the fix; land it red, then green, on the same branch.</li>
+          <li><strong>Mock only at system boundaries</strong> — camera hardware, audio hardware, file I/O. Never mock the logic under test.</li>
+          <li><strong>Fail loud, not silent.</strong> For a child-safety product, ambiguity must trigger an alert, never suppress one. <span class="pill neutral">ADR-016</span></li>
+          <li><strong>Coverage is necessary but not sufficient.</strong> Mutation testing + property tests verify the suite would catch a behavior change, not just that it ran the line.</li>
+        </ul>
+      </section>
+
+      <!-- 4: Methodology — Tiered Pyramid -->
+      <section>
+        <h2>Tiered Test Pyramid</h2>
+        <div class="pyramid">
+          <div class="level unit">Unit <span class="ct">— 166 tests · every PR · core gate ≥ 90%</span></div>
+          <div class="level integration">Integration <span class="ct">— 7 tests · @pytest.mark.integration · CI blocking</span></div>
+          <div class="level performance">Performance <span class="ct">— 3 tests · @pytest.mark.performance · CI blocking</span></div>
+          <div class="level mutation">Mutation <span class="ct">— mutmut on detection/ · weekly cron</span></div>
+          <div class="level manual">Manual <span class="ct">— Windows hardware checklist · per release</span></div>
+        </div>
+        <p class="legend">Width is qualitative: more tests at the bottom, broader scope toward the top. Every tier has a different question to answer.</p>
+      </section>
+
+      <!-- 5: Methodology — TDD + DoD -->
+      <section>
+        <h2>Per-Story Workflow &amp; Definition of Done</h2>
+        <div class="grid-2">
+          <div>
+            <h3>Workflow (per story)</h3>
+            <ol>
+              <li>Read the story + ACs</li>
+              <li>Write the failing tests (TDD)</li>
+              <li>Implement to green</li>
+              <li>Self-review checklist</li>
+              <li>PR + code review</li>
+              <li><strong>Integration check (mandatory)</strong></li>
+              <li>Tick ACs + merge</li>
+            </ol>
+            <p class="legend"><code>docs/story-workflow.md</code></p>
+          </div>
+          <div>
+            <h3>Definition of Done — ADR-019</h3>
+            <ul class="small">
+              <li>Per-story branch <code>feat/X.Y-…</code>, PR before merge</li>
+              <li>Unit + integration + perf all green</li>
+              <li>Core ≥ 90% / floor ≥ 55% branch coverage</li>
+              <li>Integration test for any new module boundary</li>
+              <li>Bug-fix? Regression test landed <em>red first</em></li>
+              <li>Fail-safe contract change? Property tests updated <em>first</em></li>
+              <li>ADRs for significant decisions</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6: Coverage — How calculated -->
+      <section>
+        <h2>Coverage — How We Calculate It</h2>
+        <ul>
+          <li><strong>Branch coverage</strong>, not line coverage. Uncovered <code>else</code> / <code>elif</code> paths count as misses. <span class="pill neutral">ADR-014</span></li>
+          <li>Scope: <code>source = ["."]</code> with <code>omit = ["tests/*", "venv/*", "tvdm.spec"]</code>. No omit of product code.</li>
+          <li>Measured on <code>pytest tests/unit/ tests/integration/ --cov</code> — both tiers contribute.</li>
+          <li>Two gates, both blocking on every PR:</li>
+        </ul>
+        <table>
+          <tr><th>Gate</th><th>Scope</th><th>Threshold</th><th>Today</th></tr>
+          <tr>
+            <td><strong>Core-logic gate</strong></td>
+            <td><code>audio/ camera/ config/ detection/ state.py</code></td>
+            <td class="num">≥ 90%</td>
+            <td class="num"><span class="pill good">96%</span></td>
+          </tr>
+          <tr>
+            <td><strong>Full-codebase floor</strong></td>
+            <td>everything (incl. <code>main.py</code> + <code>tray/*</code>)</td>
+            <td class="num">≥ 55%</td>
+            <td class="num"><span class="pill good">57%</span></td>
+          </tr>
+        </table>
+        <blockquote>The floor ratchets up; never down. Lowering it requires a new ADR.</blockquote>
+      </section>
+
+      <!-- 7: Coverage — Honest baseline -->
+      <section>
+        <h2>Coverage — The Honest Baseline Story</h2>
+        <h3>Before WS0 (advertised)</h3>
+        <div class="arrow-flow">
+          <span class="step">96 unit tests</span>
+          <span class="arr">→</span>
+          <span class="step">--cov-fail-under=80</span>
+          <span class="arr">→</span>
+          <span class="step bad">"99.3% coverage"</span>
+        </div>
+        <p class="small" style="color: var(--red);">
+          The "99.3%" was gamed: <code>[tool.coverage.run] omit = ["tray/*", "main.py", …]</code> removed <strong>608 statements (≈55% of the codebase)</strong> from measurement, including the orchestration layer where the WS1 P1 defect lived.
+        </p>
+        <h3>After WS0 (honest)</h3>
+        <table>
+          <tr><th>Layer</th><th>Stmts</th><th>Coverage</th></tr>
+          <tr><td>Core algorithm packages</td><td class="num">~310</td><td><span class="pill good">96% branch</span></td></tr>
+          <tr><td>Orchestration + UI (main + tray)</td><td class="num">~395</td><td><span class="pill warn">~25% (was 7.6%)</span></td></tr>
+          <tr><td><strong>Full codebase, no omit</strong></td><td class="num">~705</td><td><strong><span class="pill good">57% branch</span></strong></td></tr>
+        </table>
+        <p class="legend">Headline number dropped on paper; the truth surfaced. That's the point.</p>
+      </section>
+
+      <!-- 8: Test Spread -->
+      <section>
+        <h2>Test Spread Across Tiers</h2>
+        <div class="grid-3">
+          <div class="card">
+            <h4>Unit</h4>
+            <div class="stat">166</div>
+            <div class="label">tests · 9 Hypothesis property tests included</div>
+          </div>
+          <div class="card">
+            <h4>Integration</h4>
+            <div class="stat">7</div>
+            <div class="label">tests · drive real wiring, mock hardware boundaries</div>
+          </div>
+          <div class="card">
+            <h4>Performance</h4>
+            <div class="stat">3</div>
+            <div class="label">tests · CI regression guards (ADR-017)</div>
+          </div>
+        </div>
+        <h3 style="margin-top: 1em;">Out-of-band</h3>
+        <div class="grid-2">
+          <div class="card">
+            <h4>Mutation (mutmut)</h4>
+            <div class="stat">84%</div>
+            <div class="label">kill rate on <code>detection/</code> · 70 mutants · weekly cron</div>
+          </div>
+          <div class="card">
+            <h4>Manual checklist</h4>
+            <div class="stat">10 sections</div>
+            <div class="label">Windows hardware before every release</div>
+          </div>
+        </div>
+        <p class="legend">~5 second CI test job for the entire unit + integration suite. Property tests cost a fraction of a second.</p>
+      </section>
+
+      <!-- 9: Test plan highlights — Areas -->
+      <section>
+        <h2>Test Plan Highlights — Seven Areas</h2>
+        <table>
+          <tr>
+            <th>Area</th>
+            <th>Tier(s)</th>
+            <th>Key tests</th>
+          </tr>
+          <tr>
+            <td><strong>Stereo depth pipeline</strong></td>
+            <td>unit + integration + property</td>
+            <td>linear-fit math; per-camera detection; <em>WS1 deep dive</em></td>
+          </tr>
+          <tr>
+            <td><strong>Fail-safe degradation</strong></td>
+            <td>unit + property + integration</td>
+            <td>ADR-016 contract: never silent when ≥1 camera sees a person</td>
+          </tr>
+          <tr>
+            <td><strong>Calibration (4-point diamond)</strong></td>
+            <td>unit</td>
+            <td>slope/intercept within 1% on synthetic stereo points</td>
+          </tr>
+          <tr>
+            <td><strong>Camera lifecycle</strong></td>
+            <td>unit</td>
+            <td>backoff, degraded mode, reconnect, single-camera dev path, macOS permission grace period</td>
+          </tr>
+          <tr>
+            <td><strong>Drift detection</strong></td>
+            <td>unit</td>
+            <td>phaseCorrelate → cm → severity; threshold boundaries</td>
+          </tr>
+          <tr>
+            <td><strong>Alert state machine</strong></td>
+            <td>unit</td>
+            <td>cooldown, pause-on-degraded, drift-warning-once</td>
+          </tr>
+          <tr>
+            <td><strong>Startup orchestration</strong></td>
+            <td>integration</td>
+            <td><code>main.main()</code> end-to-end with mocked hardware (WS3)</td>
+          </tr>
+        </table>
+      </section>
+
+      <!-- 10: Deep dive — intro -->
+      <section>
+        <section>
+          <h2>Deep Dive — The Stereo Depth Pipeline</h2>
+          <p>
+            <strong>Why this area:</strong> it's the product's <em>one job</em>.
+            Compute how close a person is to the TV. If this is wrong, the
+            alert never fires — a silent safety failure.
+          </p>
+          <p>
+            <strong>What we found:</strong> during the QA review, a <span class="pill bad">P1 functional defect</span> caused the pipeline to report a fixed distance regardless of the person's actual position. The unit suite was 100% green. The defect lived in the orchestration glue, which was at <strong>0% coverage</strong>.
+          </p>
+          <p class="legend">Story QA.WS1 — ADR-015 — PR #2 + #3.</p>
+        </section>
+
+        <!-- 11: Deep dive — the bug -->
+        <section>
+          <h2>The Bug — Shared <code>PersonDetector</code></h2>
+          <pre><code class="language-python">
+# main.py (pre-fix) — one detector for both cameras
+detector = PersonDetector()
+threading.Thread(target=_camera_loop, args=(
+    camera_manager, FrameProcessor(),
+    detector,                # ← passed once
+    depth_estimator, ...)).start()
+
+# _camera_loop body
+dets_l = detector.detect(left_n)     # call A
+dets_r = detector.detect(right_n)    # call B
+distance = depth_estimator.estimate_distance(dets_l, dets_r)
+          </code></pre>
+          <p class="small">
+            <code>PersonDetector</code> processes every 3rd frame and returns a
+            cached result on the rest. Two calls per iteration on the <em>same instance</em>
+            land on consecutive <code>_frame_count</code> values — so the second call
+            returns a cached copy of the first.
+          </p>
+        </section>
+
+        <!-- 12: Deep dive — the consequence -->
+        <section>
+          <h2>What That Means in Numbers</h2>
+          <p class="small">Across 4 iterations of the live loop:</p>
+          <table>
+            <tr><th>Iter</th><th>Left detection</th><th>Right detection</th><th>Disparity</th><th>Computed dist.</th></tr>
+            <tr><td>1</td><td>L₁ (HOG)</td><td>cached L₁</td><td>0</td><td><span style="color:var(--red);">intercept</span></td></tr>
+            <tr><td>2</td><td>cached L₁</td><td>R₁ (HOG)</td><td>real ✓</td><td>plausible</td></tr>
+            <tr><td>3</td><td>cached R₁</td><td>cached R₁</td><td>0</td><td><span style="color:var(--red);">intercept</span></td></tr>
+            <tr><td>4</td><td>L₂ (HOG)</td><td>cached L₂</td><td>0</td><td><span style="color:var(--red);">intercept</span></td></tr>
+          </table>
+          <p class="small">
+            <strong>3 of every 4 iterations</strong> report distance = the calibration
+            intercept (a constant). The product cannot tell where the person actually
+            is. For a child-safety device, this is a P1 — the failure direction is silent.
+          </p>
+        </section>
+
+        <!-- 13: Deep dive — why unit tests missed it -->
+        <section>
+          <h2>Why the Unit Suite Missed It</h2>
+          <div class="grid-2">
+            <div>
+              <h3>What the unit tests checked</h3>
+              <ul class="small">
+                <li><code>PersonDetector</code>: fresh instance per test, HOG mocked — cache never crosses cameras</li>
+                <li><code>DepthEstimator</code>: hand-built detection tuples — never sees the corrupted dets</li>
+                <li>The <code>_camera_loop</code> wiring lived in <code>main.py</code> at <strong>0% coverage</strong></li>
+              </ul>
+            </div>
+            <div>
+              <h3>What the strategy doc had named</h3>
+              <ul class="small">
+                <li><code>tests/integration/test_camera_to_depth_pipeline.py</code></li>
+                <li>Folder existed; file did not.</li>
+                <li>The integration tier was an aspiration, not a gate.</li>
+              </ul>
+            </div>
+          </div>
+          <blockquote>
+            <strong>The defect fell straight through the missing tier.</strong>
+            The unit pyramid base was strong; the integration mid-section was empty;
+            the orchestration glue at the top was uncovered.
+          </blockquote>
+        </section>
+
+        <!-- 14: Deep dive — the fix -->
+        <section>
+          <h2>The Fix — One Detector Per Camera</h2>
+          <pre><code class="language-python">
+# main.py (post-fix) — per-camera detectors
+threading.Thread(target=_camera_loop, args=(
+    camera_manager, FrameProcessor(),
+    PersonDetector(),       # detector_left
+    PersonDetector(),       # detector_right  ← ADR-015
+    depth_estimator, ...)).start()
+          </code></pre>
+          <p class="small">
+            Same fix applied to <code>StereoCalibrator.calibrate_diamond</code> — the
+            calibration curve was also being fit from corrupted disparities.
+          </p>
+          <h3>The integration test that proved both</h3>
+          <ul class="small">
+            <li><strong>Behavioural:</strong> distinct left/right detections → correct distance; with the bug, <code>person_too_close=True</code> (false alarm); after fix, <code>False</code>.</li>
+            <li><strong>Structural guard:</strong> <code>inspect.signature(_camera_loop)</code> must contain <code>detector_left</code> and <code>detector_right</code>. A revert fails at collection time.</li>
+          </ul>
+        </section>
+      </section>
+
+      <!-- 15: Mutation testing -->
+      <section>
+        <h2>Beyond Coverage — Mutation Testing</h2>
+        <p>
+          <code>mutmut</code> systematically rewrites the source (<code>&lt;</code> → <code>&lt;=</code>,
+          constants nudged, etc.) and re-runs the suite. A surviving mutant = a missing test.
+        </p>
+        <div class="grid-2">
+          <div class="card">
+            <h4>Baseline on <code>detection/</code></h4>
+            <div class="stat">84%</div>
+            <div class="label">59 / 70 mutants killed · weekly cron + workflow_dispatch</div>
+          </div>
+          <div class="card">
+            <h4>Surviving mutants</h4>
+            <div class="stat">11</div>
+            <div class="label">all classified <em>equivalent</em> in ADR-018 — type annotations, HOG hyperparameters, <code>int(//)≡int(/)</code></div>
+          </div>
+        </div>
+        <p class="small" style="margin-top: 0.8em;">
+          <strong>Triage cadence:</strong> any new survivor classified within 2 weeks
+          as missing-test, equivalent (documented), or deferred-with-note.
+        </p>
+        <p class="legend">ADR-018 · <code>.github/workflows/mutation.yml</code></p>
+      </section>
+
+      <!-- 16: Property tests -->
+      <section>
+        <h2>Property Tests — Pressure on the Fail-Safe Contract</h2>
+        <p>Hypothesis generates random inputs and asserts <em>invariants</em>, not specific outputs.</p>
+        <p><strong>Key invariant (ADR-016):</strong> if at least one camera sees a person, the verdict is never silent.</p>
+        <pre><code class="language-python">
+@given(
+    left=st.lists(_detection_pair_strategy, min_size=1, max_size=5),
+    right=st.lists(_detection_pair_strategy, min_size=1, max_size=5),
+    min_safe=_min_safe_strategy,
+)
+def test_assess_proximity_with_any_detections_is_never_silently_safe(left, right, min_safe):
+    estimator = DepthEstimator({"slope": 0.04, "intercept": 0.5})
+    _too_close, reason = estimator.assess_proximity(_dets(left), _dets(right), min_safe)
+    assert reason != "no_person"   # ADR-016 — fail loud, not silent
+        </code></pre>
+        <p class="small">
+          Hypothesis exercises this with hundreds of generated inputs per run.
+          If a future change ever introduces a silent-failure path for some unusual
+          input the example tests didn't think of, this test finds it.
+        </p>
+      </section>
+
+      <!-- 17: CI Enforcement -->
+      <section>
+        <h2>CI Enforcement</h2>
+        <p>What used to be "the strategy doc says…" is now a CI job that fails the PR.</p>
+        <table>
+          <tr><th>Job</th><th>What it runs</th><th>Trigger</th><th>Status</th></tr>
+          <tr><td><code>test</code></td><td>black + ruff + unit + integration + 2 coverage gates</td><td>every PR</td><td><span class="pill good">blocking</span></td></tr>
+          <tr><td><code>integration</code></td><td><code>pytest -m integration</code></td><td>every PR</td><td><span class="pill good">blocking</span></td></tr>
+          <tr><td><code>performance</code></td><td><code>pytest -m performance</code></td><td>every PR</td><td><span class="pill good">blocking</span></td></tr>
+          <tr><td><code>mutation</code></td><td><code>mutmut run</code> on <code>detection/</code></td><td>Mon 06:00 UTC + on-demand</td><td><span class="pill neutral">track + triage</span></td></tr>
+          <tr><td><code>build-windows-exe</code></td><td><code>pyinstaller</code></td><td>version tags only</td><td><span class="pill warn">needs: test + integration + performance</span></td></tr>
+        </table>
+        <blockquote>
+          <strong>A perf-budget breach blocks a release tag</strong>, not just a PR.
+        </blockquote>
+      </section>
+
+      <!-- 18: Workplan retrospective -->
+      <section>
+        <h2>Workplan Retrospective — WS0 → WS6</h2>
+        <table class="smaller">
+          <tr><th>WS</th><th>Headline outcome</th><th>Artefact(s)</th></tr>
+          <tr><td>WS0</td><td>Honest coverage surfaced; layered gates; CI tiers</td><td>ADR-014</td></tr>
+          <tr><td>WS1</td><td><strong>P1 fix:</strong> shared-detector defect; one detector per camera</td><td>ADR-015</td></tr>
+          <tr><td>WS2</td><td>Fail-safe contract — degrade loud, not silent</td><td>ADR-016</td></tr>
+          <tr><td>WS3</td><td><code>main.py</code> 0% → 83% via startup integration tests; floor ratcheted 45→55%</td><td></td></tr>
+          <tr><td>WS4</td><td>Performance tier built; CI vs hardware budgets distinguished</td><td>ADR-017</td></tr>
+          <tr><td>WS5</td><td>mutmut + Hypothesis; 84% mutation baseline on <code>detection/</code></td><td>ADR-018</td></tr>
+          <tr><td>WS6</td><td>Definition of Done consolidated; integration tests <strong>mandatory</strong></td><td>ADR-019</td></tr>
+        </table>
+        <p class="legend">Six ADRs and seven branches landed between 2026-05-29 and 2026-05-30.</p>
+      </section>
+
+      <!-- 19: What's next -->
+      <section>
+        <h2>What's Next</h2>
+        <div class="grid-2">
+          <div>
+            <h3>Repo-admin (documented in ADR-019)</h3>
+            <ul class="small">
+              <li>Branch protection on <code>main</code> — require <code>test</code> + <code>integration</code> + <code>performance</code> jobs green</li>
+              <li>Require linear history</li>
+              <li>First-week audit of the new PR template</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Continuous improvement</h3>
+            <ul class="small">
+              <li>Ratchet the floor up as <code>main.py</code> + <code>tray/*</code> coverage grows</li>
+              <li>Extend mutmut scope to <code>camera/</code> when its pure-logic surface grows</li>
+              <li>Add real-image fixtures for HOG-accuracy regression (currently manual)</li>
+              <li>Surface <code>assess_proximity</code> <code>reason</code> in tray status for diagnostics</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 20: Close -->
+      <section class="title">
+        <h1>Questions?</h1>
+        <p class="subtitle">
+          The full audit trail is in <code>docs/decisions/</code> (ADR-014 → ADR-019)
+          and the QA workplan branches on GitHub.
+        </p>
+        <p class="meta">
+          QA Lead &middot; 2026-05-30 &middot; v0.2.0 post-hardening
+        </p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reveal.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/plugin/highlight/highlight.js"></script>
+  <script>
+    Reveal.initialize({
+      hash: true,
+      progress: true,
+      slideNumber: 'c/t',
+      controls: true,
+      transition: 'slide',
+      transitionSpeed: 'fast',
+      width: 1280,
+      height: 800,
+      margin: 0.06,
+      plugins: [ RevealHighlight ]
+    });
+  </script>
+</body>
+</html>
