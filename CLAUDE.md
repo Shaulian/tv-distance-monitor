@@ -58,6 +58,7 @@ Windows desktop tray application that captures video from 2 USB cameras, runs im
 - Manual testing on Windows (physical machine or VM) before release
 - Test both USB cameras detected and handled correctly
 - Verify audio announcements play at expected volume via configured speaker
+- **Quote authoritative numbers, never from memory.** Before any doc, slide, ADR, or PR description quotes a test count or coverage figure, run `pytest --collect-only` and `coverage report` and paste the live output. Numbers go stale fast.
 
 ## Packaging & Distribution
 
@@ -85,6 +86,16 @@ Windows desktop tray application that captures video from 2 USB cameras, runs im
 - Open a PR against `main` before merging — even when working alone. The PR is the code review gate and the CI trigger.
 - Do not commit story work directly to `main`. `main` receives merges only.
 - A story is not **Done** until: all ACs are ticked in `docs/epics-and-stories.md`, CI is green on the PR, and the branch is merged.
+
+### Stacked PRs and Branch Sync
+
+These rules exist because they bit us in real sessions: a commit landed on `main` because the working branch had silently switched; a stacked PR was merged into its parent and left stranded above `main`; a `pull --ff-only` succeeded against a base that wasn't what was expected.
+
+- **Verify the current branch before staging.** Run `git branch --show-current` first; do not trust prior state across multi-step work.
+- **Stacked PRs target the parent feature branch, not `main`.** When a story depends on an in-flight branch (WS1 → WS0, WS2 → main-after-WS1, etc.), open the PR against the parent. GitHub auto-retargets to `main` after the parent merges. The diff stays clean.
+- **After every merge by the user (or any external git op), sync AND verify.** `git fetch origin && git checkout main && git pull --ff-only` is not enough — also `git log --oneline -3` and a `grep` for the new code or `ls` for the new file to confirm what's actually in the working tree. The merge can be on the wrong base.
+- **Force-push only `--force-with-lease`, only on your own feature branches.** Never force-push `main`.
+- **After a stacked-PR merge, check whether the parent reached `main`.** A PR merged into a feature branch ≠ merged into `main`. If the parent is still ahead, open a fresh PR `parent → main` (see the WS1 → WS0 → PR #3 catch-up).
 
 ### Self-Review Before Every PR
 
